@@ -2,9 +2,12 @@
 
 #pragma once
 //#include "CoreMinimal.h"
-#include "EngineMinimal.h"
+#include "Battle.h"
+//#include "EngineMinimal.h"
 #include "GameFramework/Actor.h"
 #include "Fountain.generated.h"
+
+
 
 UCLASS()
 class BATTLE_API AFountain : public AActor

@@ -3,6 +3,8 @@
 
 #include "Fountain.h"
 
+
+
 // Sets default values
 AFountain::AFountain()
 {
@@ -51,6 +53,8 @@ AFountain::AFountain()
 void AFountain::BeginPlay()
 {
 	Super::BeginPlay();
+
+	UE_LOG(Battle, Warning, TEXT("ActorName: %s, ID: %d, Location X: %.3f"), *GetName(), ID, GetActorLocation().X);
 	
 }
 
