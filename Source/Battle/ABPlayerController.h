@@ -3,6 +3,7 @@
 #pragma once
 
 #include "CoreMinimal.h"
+#include "Battle.h"
 #include "GameFramework/PlayerController.h"
 #include "ABPlayerController.generated.h"
 
@@ -13,5 +14,12 @@ UCLASS()
 class BATTLE_API AABPlayerController : public APlayerController
 {
 	GENERATED_BODY()
+
+protected:
+	virtual void BeginPlay() override;
+
+public:
+	virtual void PostInitializeComponents() override;
+	virtual void OnPossess(APawn* aPawn) override;
 	
 };

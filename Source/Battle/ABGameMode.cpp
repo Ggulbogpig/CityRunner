@@ -2,4 +2,18 @@
 
 
 #include "ABGameMode.h"
+#include "ABCharacter.h"
+#include "ABPawn.h"
+#include "ABPlayerController.h"
+
+AABGameMode::AABGameMode() {
+	DefaultPawnClass = AABCharacter::StaticClass(); //게임모드에 폰 지정
+	PlayerControllerClass = AABPlayerController::StaticClass();
+}
+
+void AABGameMode::PostLogin(APlayerController* NewPlayer) {
+	ABLOG(Warning, TEXT("PostLogin Begin"));
+	Super::PostLogin(NewPlayer);
+	ABLOG(Warning, TEXT("PostLogin End"));
+}
 
