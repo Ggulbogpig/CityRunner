@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "CoreMinimal.h"
+#include "Battle.h"
 #include "Animation/AnimInstance.h"
 #include "ABAnimInstance.generated.h"
 
@@ -13,5 +13,17 @@ UCLASS()
 class BATTLE_API UABAnimInstance : public UAnimInstance
 {
 	GENERATED_BODY()
+
+public:
+	UABAnimInstance();
+	virtual void NativeUpdateAnimation(float DeltaSeconds) override;
+
+private:
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category=Pawn,
+		Meta = (AllowPrivateAccess=true))
+	float CurrentPawnSpeed;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Pawn, Meta=(AllowPrivateAccess=true))
+	bool IsInAir;
 	
 };
