@@ -27,8 +27,8 @@ void UABAnimInstance::NativeUpdateAnimation(float DeltaSeconds) {
 }
 
 void UABAnimInstance::PlayAttackMontage() {
-	if (!Montage_IsPlaying(AttackMontage)) {
+	
 		Montage_Play(AttackMontage, 1.0f);
-	}
+	
 }
 
