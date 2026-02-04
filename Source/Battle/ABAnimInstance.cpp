@@ -6,6 +6,10 @@
 UABAnimInstance::UABAnimInstance() {
 	CurrentPawnSpeed = 0.0f;
 	IsInAir = false;
+	static ConstructorHelpers::FObjectFinder<UAnimMontage> ATTACK_MONTAGE(TEXT("/Script/Engine.AnimMontage'/Game/Anim/Exo_Gray_Skeleton_Montage1.Exo_Gray_Skeleton_Montage1'"));
+	if (ATTACK_MONTAGE.Succeeded()) {
+		AttackMontage = ATTACK_MONTAGE.Object;
+	}
 }
 
 void UABAnimInstance::NativeUpdateAnimation(float DeltaSeconds) {
@@ -19,6 +23,12 @@ void UABAnimInstance::NativeUpdateAnimation(float DeltaSeconds) {
 		if (Character) {
 			IsInAir = Character->GetMovementComponent()->IsFalling();
 		}
+	}
+}
+
+void UABAnimInstance::PlayAttackMontage() {
+	if (!Montage_IsPlaying(AttackMontage)) {
+		Montage_Play(AttackMontage, 1.0f);
 	}
 }
 
