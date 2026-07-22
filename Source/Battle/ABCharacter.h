@@ -26,7 +26,7 @@ protected:
 	};
 
 	void SetControlMode(EControlMode ControlMode);
-	EControlMode CurrentControlMode = EControlMode::GTA;
+	EControlMode CurrentControlMode = EControlMode::DIABLO;
 	FVector DirectionToMove = FVector::ZeroVector;
 
 public:	
