@@ -32,6 +32,7 @@ AABCharacter::AABCharacter()
 	}
 
 	SetControlMode(EControlMode::GTA);
+	SetRunnerState(ERunnerState::GroundRunning);
 
 	GetCharacterMovement()->JumpZVelocity = 700.0f;
 	GetCharacterMovement()->GravityScale = 1.5f;
@@ -56,9 +57,11 @@ void AABCharacter::Tick(float DeltaTime)
 {
 	Super::Tick(DeltaTime);
 
+	HandleAutoRun();
+
 	switch (CurrentControlMode) {
 	case EControlMode::DIABLO:
-		if (DirectionToMove.SizeSquared() > 0.0f) {
+		if (!bOnWall && DirectionToMove.SizeSquared() > 0.0f) {
 			GetController()->SetControlRotation(FRotationMatrix::MakeFromX(DirectionToMove).Rotator());
 			AddMovementInput(DirectionToMove);
 		}
@@ -88,6 +91,7 @@ void AABCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCompone
 void AABCharacter::UpDown(float NewAxisValue) {
 	//AddMovementInput(GetActorForwardVector(), NewAxisValue); 방법1
 	//AddMovementInput(FRotationMatrix(GetControlRotation()).GetUnitAxis(EAxis::X), NewAxisValue); 개선1
+	if (bOnWall) { return; }
 	switch (CurrentControlMode) {
 	case EControlMode::GTA:
 		AddMovementInput(FRotationMatrix(FRotator(0.0f, GetControlRotation().Yaw, 0.0f)).GetUnitAxis(EAxis::X), NewAxisValue);
@@ -100,6 +104,8 @@ void AABCharacter::UpDown(float NewAxisValue) {
 
 void AABCharacter::LeftRight(float NewAxisValue) {
 	//AddMovementInput(FRotationMatrix(GetControlRotation()).GetUnitAxis(EAxis::Y), NewAxisValue); 개선 1
+	if (bOnWall) { return; }
+	
 	switch (CurrentControlMode) {
 	case EControlMode::GTA:
 		AddMovementInput(FRotationMatrix(FRotator(0.0f, GetControlRotation().Yaw, 0.0f)).GetUnitAxis(EAxis::Y), NewAxisValue);
@@ -184,6 +190,10 @@ void AABCharacter::SetControlMode(EControlMode NewControlMode) {
 	}
 }
 
+void AABCharacter::SetRunnerState(ERunnerState RunnerState) {
+	CurrentRunnerState = RunnerState;
+
+}
 void AABCharacter::ViewChange() {
 	switch (CurrentControlMode) {
 	case EControlMode::GTA:
@@ -250,6 +260,15 @@ void AABCharacter::AttackEndComboState() {
 	IsComboInputOn = false;
 	CanNextCombo = false;
 	CurrentCombo = 0;
+}
+
+void AABCharacter::HandleAutoRun() {
+	if (CurrentRunnerState == ERunnerState::Dead || bOnWall)
+	{
+		return;
+	}
+
+	AddMovementInput(GetActorForwardVector(), 1.0f);
 }
 
 

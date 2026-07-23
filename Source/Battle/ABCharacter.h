@@ -15,18 +15,36 @@ class BATTLE_API AABCharacter : public ACharacter
 public:
 	// Sets default values for this character's properties
 	AABCharacter();
+	//Ãß°¡
+	UPROPERTY(BlueprintReadWrite, Category = "WallRun")
+	bool bOnWall = false;
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	void HandleAutoRun();
 
 	enum class EControlMode {
 		GTA,
 		DIABLO
 	};
 
+	enum class ERunnerState {
+		GroundRunning,
+		Jumping,
+		Falling,
+		Sliding,
+		WallRunning,
+		Grinding,
+		Dead
+	};
+
+
+
 	void SetControlMode(EControlMode ControlMode);
+	void SetRunnerState(ERunnerState RunnerState);
 	EControlMode CurrentControlMode = EControlMode::DIABLO;
+	ERunnerState CurrentRunnerState = ERunnerState::GroundRunning;
 	FVector DirectionToMove = FVector::ZeroVector;
 
 public:	

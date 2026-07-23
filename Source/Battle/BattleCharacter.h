@@ -44,8 +44,14 @@ class ABattleCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* LookAction;
 
+
+
 public:
 	ABattleCharacter();
+
+	//Ãß°¡
+	UPROPERTY(BlueprintReadWrite, Category = "WallRun")
+	bool bOnWall = false;
 	
 
 protected:
