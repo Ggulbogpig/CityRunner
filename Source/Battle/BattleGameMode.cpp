@@ -8,6 +8,7 @@ ABattleGameMode::ABattleGameMode()
 {
 	// set default pawn class to our Blueprinted character
 	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter1"));
+	///Game/Characters/BP_Character
 	///Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter1
 	if (PlayerPawnBPClass.Class != NULL)
 	{

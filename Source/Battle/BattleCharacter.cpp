@@ -101,9 +101,9 @@ void ABattleCharacter::Move(const FInputActionValue& Value)
 	if (Controller != nullptr)
 	{
 		//Ãß°¡
-		if (bOnWall) {
+	/*	if (bOnWall) {
 			return;
-		}
+		}*/
 		// find out which way is forward
 		const FRotator Rotation = Controller->GetControlRotation();
 		const FRotator YawRotation(0, Rotation.Yaw, 0);
