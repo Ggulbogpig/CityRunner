@@ -11,6 +11,9 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 
+#include "Spikes.h"
+#include "WallSpike.h"
+#include "Engine.h"
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
 //////////////////////////////////////////////////////////////////////////
@@ -58,6 +61,14 @@ void ABattleCharacter::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
+
+	CanMove = true;
+
+	
+
+	GetCapsuleComponent()->OnComponentBeginOverlap.AddDynamic(this,&ABattleCharacter::OnOverlapBegin);
+
+	
 }
 
 //////////////////////////////////////////////////////////////////////////
@@ -131,4 +142,62 @@ void ABattleCharacter::Look(const FInputActionValue& Value)
 		AddControllerYawInput(LookAxisVector.X);
 		AddControllerPitchInput(LookAxisVector.Y);
 	}
+}
+void ABattleCharacter::RestartLevel() {
+	UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName()));
+}
+
+void ABattleCharacter::OnOverlapBegin(UPrimitiveComponent* OverlappedComp,
+	AActor* OtherActor, UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {
+
+	if (OtherActor != nullptr) {
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("Overlap ¹ß»ý! OtherActor: %s, OtherComp: %s"),
+			*GetNameSafe(OtherActor),
+			*GetNameSafe(OtherComp)
+		);
+		ASpikes* WallSpike = Cast<AWallSpike>(OtherActor);
+		ASpikes* Spike = Cast<ASpikes>(OtherActor);
+
+		if (WallSpike || Spike) {
+
+			GetMesh()->Deactivate();
+			GetMesh()->SetVisibility(false);
+
+			//CanMove = false;
+			FTimerHandle UnusedHandle;
+			GetWorldTimerManager().SetTimer(UnusedHandle, this,
+				&ABattleCharacter::RestartLevel, 2.f, false);
+		}
+	}
+
+}
+
+void ABattleCharacter::Tick(float DeltaTime) {
+
+	Super::Tick(DeltaTime);
+
+	if (!CanMove)
+	{
+		return;
+	}
+
+	FVector MoveDirection;
+
+	if (bOnWall)
+	{
+		MoveDirection = FVector::ForwardVector;
+	}
+	else
+	{
+		MoveDirection = GetActorForwardVector();
+		MoveDirection.Z = 0.0f;
+		MoveDirection.Normalize();
+	}
+
+	AddMovementInput(MoveDirection, 1.0f);
+
 }

@@ -34,3 +34,8 @@ UBoxComponent* ABaseLevel::GetTrigger() {
 	return Trigger;
 }
 
+UBoxComponent* ABaseLevel::GetSpawnLocation()
+{
+	return SpawnLocation;
+}
+

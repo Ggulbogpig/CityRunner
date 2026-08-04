@@ -52,6 +52,8 @@ public:
 	//Ãß°¡
 	UPROPERTY(BlueprintReadWrite, Category = "WallRun")
 	bool bOnWall = false;
+	bool CanMove = true;
+
 	
 
 protected:
@@ -69,6 +71,13 @@ protected:
 	
 	// To add mapping context
 	virtual void BeginPlay();
+	virtual void Tick(float DeltaTime) override;
+
+	UFUNCTION()
+	void OnOverlapBegin(UPrimitiveComponent* OverlappedComp,
+		AActor* OtherActor, UPrimitiveComponent* OtherComp,
+		int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult);
+	void RestartLevel();
 
 public:
 	/** Returns CameraBoom subobject **/
