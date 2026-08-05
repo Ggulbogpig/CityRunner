@@ -45,6 +45,13 @@ class ABattleCharacter : public ACharacter
 	UInputAction* LookAction;
 
 
+private:
+	FVector RunDirection;
+	FVector BaseRunDirection;
+	FVector CurrentRunDirection;
+	float LateralInput;
+
+
 
 public:
 	ABattleCharacter();
@@ -61,8 +68,13 @@ protected:
 	/** Called for movement input */
 	void Move(const FInputActionValue& Value);
 
+	void StopMove(const FInputActionValue& Value);
+
 	/** Called for looking input */
 	void Look(const FInputActionValue& Value);
+
+	void UpdateRunnerMovement(
+		float DeltaTime);
 			
 
 protected:

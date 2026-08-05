@@ -62,6 +62,14 @@ void ABattleCharacter::BeginPlay()
 	// Call the base class  
 	Super::BeginPlay();
 
+	RunDirection = GetActorForwardVector().GetSafeNormal();
+	BaseRunDirection = GetActorForwardVector();
+	BaseRunDirection.Z = 0.0f;
+	BaseRunDirection.Normalize();
+	LateralInput = GetActorForwardVector().X;
+
+	CurrentRunDirection = BaseRunDirection;
+
 	CanMove = true;
 
 	
@@ -94,6 +102,26 @@ void ABattleCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 
 		// Moving
 		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ABattleCharacter::Move);
+		EnhancedInputComponent->BindAction(
+			MoveAction,
+			ETriggerEvent::Triggered,
+			this,
+			&ABattleCharacter::Move
+		);
+
+		EnhancedInputComponent->BindAction(
+			MoveAction,
+			ETriggerEvent::Completed,
+			this,
+			&ABattleCharacter::StopMove
+		);
+
+		EnhancedInputComponent->BindAction(
+			MoveAction,
+			ETriggerEvent::Canceled,
+			this,
+			&ABattleCharacter::StopMove
+		);
 
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABattleCharacter::Look);
@@ -104,31 +132,100 @@ void ABattleCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	}
 }
 
+//void ABattleCharacter::Move(const FInputActionValue& Value)
+//{
+//	// input is a Vector2D
+//	FVector2D MovementVector = Value.Get<FVector2D>();
+//
+//	if (Controller != nullptr)
+//	{
+//		//추가
+//	/*	if (bOnWall) {
+//			return;
+//		}*/
+//		// find out which way is forward
+//		const FRotator Rotation = Controller->GetControlRotation();
+//		const FRotator YawRotation(0, Rotation.Yaw, 0);
+//
+//		// get forward vector
+//		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+//	
+//		// get right vector 
+//		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+//
+//		// add movement 
+//		AddMovementInput(ForwardDirection, MovementVector.Y);
+//		AddMovementInput(RightDirection, MovementVector.X);
+//	}
+//}
+
 void ABattleCharacter::Move(const FInputActionValue& Value)
 {
-	// input is a Vector2D
-	FVector2D MovementVector = Value.Get<FVector2D>();
+	const FVector2D MovementVector = Value.Get<FVector2D>();
 
-	if (Controller != nullptr)
+	if (!Controller || bOnWall)
 	{
-		//추가
-	/*	if (bOnWall) {
-			return;
-		}*/
-		// find out which way is forward
-		const FRotator Rotation = Controller->GetControlRotation();
-		const FRotator YawRotation(0, Rotation.Yaw, 0);
-
-		// get forward vector
-		const FVector ForwardDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
-	
-		// get right vector 
-		const FVector RightDirection = FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
-
-		// add movement 
-		AddMovementInput(ForwardDirection, MovementVector.Y);
-		AddMovementInput(RightDirection, MovementVector.X);
+		LateralInput = 0.0f;
+		return;
 	}
+
+	LateralInput = FMath::Clamp(
+		MovementVector.X,
+		-1.0f,
+		1.0f
+	);
+}
+
+void ABattleCharacter::StopMove(const FInputActionValue& Value)
+{
+	LateralInput = 0.0f;
+}
+
+void ABattleCharacter::UpdateRunnerMovement(
+	float DeltaTime)
+{
+
+	FVector MoveDirection;
+
+	//if (bOnWall)
+	//{
+	//	MoveDirection = FVector::ForwardVector;
+	//}
+	//else
+	//{
+	//	MoveDirection = GetActorForwardVector();
+	//	MoveDirection.Z = 0.0f;
+	//	MoveDirection.Normalize();
+	//}
+
+	// 항상 기준 진행 방향으로 자동 전진
+	AddMovementInput(BaseRunDirection, 1.0f);
+
+	const FVector RightDirection =
+		FVector::CrossProduct(
+			FVector::UpVector,
+			BaseRunDirection
+		).GetSafeNormal();
+
+	// 키를 누르는 동안만 좌우 횡이동
+	AddMovementInput(
+		RightDirection,
+		LateralInput * 0.75f
+	);
+
+	// 캐릭터 본체는 계속 전방을 바라봄
+	const FRotator TargetRotation =
+		BaseRunDirection.Rotation();
+
+	const FRotator NewRotation =
+		FMath::RInterpTo(
+			GetActorRotation(),
+			TargetRotation,
+			DeltaTime,
+			10.0f
+		);
+
+	SetActorRotation(NewRotation);
 }
 
 void ABattleCharacter::Look(const FInputActionValue& Value)
@@ -185,19 +282,8 @@ void ABattleCharacter::Tick(float DeltaTime) {
 		return;
 	}
 
-	FVector MoveDirection;
 
-	if (bOnWall)
-	{
-		MoveDirection = FVector::ForwardVector;
-	}
-	else
-	{
-		MoveDirection = GetActorForwardVector();
-		MoveDirection.Z = 0.0f;
-		MoveDirection.Normalize();
-	}
-
-	AddMovementInput(MoveDirection, 1.0f);
+	//AddMovementInput(MoveDirection, 1.0f);
+	UpdateRunnerMovement(DeltaTime);
 
 }
