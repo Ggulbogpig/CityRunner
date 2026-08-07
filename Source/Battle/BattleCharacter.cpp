@@ -30,7 +30,7 @@ ABattleCharacter::ABattleCharacter()
 	bUseControllerRotationRoll = false;
 
 	// Configure character movement
-	GetCharacterMovement()->bOrientRotationToMovement = true; // Character moves in the direction of input...	
+	GetCharacterMovement()->bOrientRotationToMovement = false; // Character moves in the direction of input...	
 	GetCharacterMovement()->RotationRate = FRotator(0.0f, 500.0f, 0.0f); // ...at this rotation rate
 
 	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
@@ -66,7 +66,7 @@ void ABattleCharacter::BeginPlay()
 	BaseRunDirection = GetActorForwardVector();
 	BaseRunDirection.Z = 0.0f;
 	BaseRunDirection.Normalize();
-	LateralInput = GetActorForwardVector().X;
+	LateralInput = 0.0f;
 
 	CurrentRunDirection = BaseRunDirection;
 
@@ -101,7 +101,7 @@ void ABattleCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
 
 		// Moving
-		EnhancedInputComponent->BindAction(MoveAction, ETriggerEvent::Triggered, this, &ABattleCharacter::Move);
+		
 		EnhancedInputComponent->BindAction(
 			MoveAction,
 			ETriggerEvent::Triggered,
@@ -224,6 +224,8 @@ void ABattleCharacter::UpdateRunnerMovement(
 			DeltaTime,
 			10.0f
 		);
+
+	
 
 	SetActorRotation(NewRotation);
 }

@@ -64,6 +64,8 @@ void ASpawnLevel::SpawnLevel(bool IsFirst)
 	}
 
 	if (NewLevel) {
+		OnLevelSpawned(NewLevel);
+
 		if (NewLevel->GetTrigger()) {
 			NewLevel->GetTrigger()->OnComponentBeginOverlap.AddDynamic(this, &ASpawnLevel::OnOverlapBegin);
 		}
@@ -79,4 +81,6 @@ void ASpawnLevel::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* Ot
 {
 	SpawnLevel(false);
 }
+
+
 
