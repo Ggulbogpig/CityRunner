@@ -15,3 +15,4 @@ ABattleGameMode::ABattleGameMode()
 		DefaultPawnClass = PlayerPawnBPClass.Class;
 	}
 }
+

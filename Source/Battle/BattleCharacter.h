@@ -61,6 +61,13 @@ public:
 	bool bOnWall = false;
 	bool CanMove = true;
 
+	// BattleCharacter.h
+
+	UPROPERTY(BlueprintReadWrite, Category = "Runner")
+	bool bMapRotating = false;
+
+	UFUNCTION(BlueprintCallable, Category = "Runner")
+	void SetMapRotating(bool bRotating);
 	
 
 protected:
@@ -75,6 +82,10 @@ protected:
 
 	void UpdateRunnerMovement(
 		float DeltaTime);
+
+	UFUNCTION(BlueprintCallable, Category="Runner")
+	void StartWallTransition();
+	
 			
 
 protected:

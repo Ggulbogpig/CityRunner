@@ -36,7 +36,7 @@ ABattleCharacter::ABattleCharacter()
 	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
 	// instead of recompiling to adjust them
 	GetCharacterMovement()->JumpZVelocity = 900.f;
-	GetCharacterMovement()->AirControl = 0.2f;
+	GetCharacterMovement()->AirControl = 2.0f; //공중에서 얼마나 이동을 자유롭게 하는지
 	GetCharacterMovement()->MaxWalkSpeed = 500.f;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
@@ -169,6 +169,14 @@ void ABattleCharacter::Move(const FInputActionValue& Value)
 		return;
 	}
 
+
+	// 맵 회전 중에는 A/D 입력 무시
+	if (bMapRotating)
+	{
+		LateralInput = 0.0f;
+		return;
+	}
+
 	LateralInput = FMath::Clamp(
 		MovementVector.X,
 		-1.0f,
@@ -207,11 +215,13 @@ void ABattleCharacter::UpdateRunnerMovement(
 			BaseRunDirection
 		).GetSafeNormal();
 
-	// 키를 누르는 동안만 좌우 횡이동
-	AddMovementInput(
-		RightDirection,
-		LateralInput * 0.75f
-	);
+	
+		// 키를 누르는 동안만 좌우 횡이동
+		AddMovementInput(
+			RightDirection,
+			LateralInput * 0.75f
+		);
+	
 
 	// 캐릭터 본체는 계속 전방을 바라봄
 	const FRotator TargetRotation =
@@ -273,6 +283,21 @@ void ABattleCharacter::OnOverlapBegin(UPrimitiveComponent* OverlappedComp,
 		}
 	}
 
+}
+
+void ABattleCharacter::StartWallTransition()
+{
+	LateralInput = 0.0f;
+}
+
+void ABattleCharacter::SetMapRotating(bool bRotating)
+{
+	bMapRotating = bRotating;
+
+	if (bMapRotating)
+	{
+		LateralInput = 0.0f;
+	}
 }
 
 void ABattleCharacter::Tick(float DeltaTime) {
