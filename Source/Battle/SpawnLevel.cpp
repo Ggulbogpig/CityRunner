@@ -43,7 +43,7 @@ void ASpawnLevel::SpawnLevel(bool IsFirst)
 		SpawnLocation = LastLevel->GetSpawnLocation()->GetComponentTransform().GetTranslation();
 	}
 
-	RandomLevel = FMath::RandRange(1, 4);
+	RandomLevel = FMath::RandRange(1, 9);
 	ABaseLevel* NewLevel = nullptr;
 
 	if (RandomLevel == 1) {
@@ -62,6 +62,26 @@ void ASpawnLevel::SpawnLevel(bool IsFirst)
 		NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level4,
 			SpawnLocation, SpawnRotation, SpawnInfo);
 	}
+	else if (RandomLevel == 5) {
+		NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level5,
+			SpawnLocation, SpawnRotation, SpawnInfo);
+	}
+	else if (RandomLevel == 6) {
+		NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level6,
+			SpawnLocation, SpawnRotation, SpawnInfo);
+	}
+	else if (RandomLevel == 7) {
+		NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level7,
+			SpawnLocation, SpawnRotation, SpawnInfo);
+	}
+	else if (RandomLevel == 8) {
+		NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level8,
+			SpawnLocation, SpawnRotation, SpawnInfo);
+	}
+	else if (RandomLevel == 9) {
+		NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level9,
+			SpawnLocation, SpawnRotation, SpawnInfo);
+	}
 
 	if (NewLevel) {
 		OnLevelSpawned(NewLevel);
@@ -73,6 +93,12 @@ void ASpawnLevel::SpawnLevel(bool IsFirst)
 
 	LevelList.Add(NewLevel);
 	if (LevelList.Num() > 5) {
+		ABaseLevel* OldLevel = LevelList[0];
+
+		if (IsValid(OldLevel))
+		{
+			OldLevel->Destroy();
+		}
 		LevelList.RemoveAt(0);
 	}
 }

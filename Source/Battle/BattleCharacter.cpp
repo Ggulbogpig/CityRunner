@@ -36,11 +36,13 @@ ABattleCharacter::ABattleCharacter()
 	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
 	// instead of recompiling to adjust them
 	GetCharacterMovement()->JumpZVelocity = 900.f;
-	GetCharacterMovement()->AirControl = 2.0f; //공중에서 얼마나 이동을 자유롭게 하는지
+	GetCharacterMovement()->AirControl = 2.5f; //공중에서 얼마나 이동을 자유롭게 하는지
 	GetCharacterMovement()->MaxWalkSpeed = 500.f;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
+
+	JumpMaxCount = 2;
 
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -270,8 +272,16 @@ void ABattleCharacter::OnOverlapBegin(UPrimitiveComponent* OverlappedComp,
 		);
 		ASpikes* WallSpike = Cast<AWallSpike>(OtherActor);
 		ASpikes* Spike = Cast<ASpikes>(OtherActor);
+		// BP_Level의 낙사 판정 Box인지 확인
+		const FName ComponentName = OtherComp->GetFName();
 
-		if (WallSpike || Spike) {
+		const bool bKillBox =
+			ComponentName == TEXT("Die1") ||
+			ComponentName == TEXT("Die2") ||
+			ComponentName == TEXT("Die3") ||
+			ComponentName == TEXT("Die4");
+
+		if (WallSpike || Spike || bKillBox) {
 
 			GetMesh()->Deactivate();
 			GetMesh()->SetVisibility(false);
@@ -281,6 +291,8 @@ void ABattleCharacter::OnOverlapBegin(UPrimitiveComponent* OverlappedComp,
 			GetWorldTimerManager().SetTimer(UnusedHandle, this,
 				&ABattleCharacter::RestartLevel, 2.f, false);
 		}
+
+
 	}
 
 }
@@ -312,5 +324,8 @@ void ABattleCharacter::Tick(float DeltaTime) {
 
 	//AddMovementInput(MoveDirection, 1.0f);
 	UpdateRunnerMovement(DeltaTime);
+
+	// 점수 증가
+	Score += ScorePerSecond * DeltaTime;
 
 }
