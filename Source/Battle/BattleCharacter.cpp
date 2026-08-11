@@ -36,7 +36,7 @@ ABattleCharacter::ABattleCharacter()
 	// Note: For faster iteration times these variables, and many more, can be tweaked in the Character Blueprint
 	// instead of recompiling to adjust them
 	GetCharacterMovement()->JumpZVelocity = 900.f;
-	GetCharacterMovement()->AirControl = 2.5f; //공중에서 얼마나 이동을 자유롭게 하는지
+	GetCharacterMovement()->AirControl = 1.0f; //공중에서 얼마나 이동을 자유롭게 하는지
 	GetCharacterMovement()->MaxWalkSpeed = 500.f;
 	GetCharacterMovement()->MinAnalogWalkSpeed = 20.f;
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
@@ -196,6 +196,17 @@ void ABattleCharacter::UpdateRunnerMovement(
 {
 
 	FVector MoveDirection;
+	const FVector RightDirection =
+		FVector::CrossProduct(
+			FVector::UpVector,
+			BaseRunDirection
+		).GetSafeNormal();
+	// 항상 기준 진행 방향으로 자동 전진
+	AddMovementInput(BaseRunDirection, 1.0f);
+
+	//if (GetCharacterMovement() -> IsFalling()) {
+	//	UE_LOG(LogTemp, Warning, TEXT("isflying"));
+	//}
 
 	//if (bOnWall)
 	//{
@@ -207,22 +218,29 @@ void ABattleCharacter::UpdateRunnerMovement(
 	//	MoveDirection.Z = 0.0f;
 	//	MoveDirection.Normalize();
 	//}
+	if (GetCharacterMovement()->IsFalling())
+	{
+		FVector Velocity = GetCharacterMovement()->Velocity;
 
-	// 항상 기준 진행 방향으로 자동 전진
-	AddMovementInput(BaseRunDirection, 1.0f);
+		const float AirSideSpeed = 400.0f;
 
-	const FVector RightDirection =
-		FVector::CrossProduct(
-			FVector::UpVector,
-			BaseRunDirection
-		).GetSafeNormal();
+		// 현재 전진/수직 속도는 유지하고,
+		// 좌우 성분만 직접 결정
+		const float CurrentSideSpeed =
+			FVector::DotProduct(Velocity, RightDirection);
 
-	
+		Velocity -= RightDirection * CurrentSideSpeed;
+		Velocity += RightDirection * (LateralInput * AirSideSpeed);
+
+		GetCharacterMovement()->Velocity = Velocity;
+	}
+	else {
 		// 키를 누르는 동안만 좌우 횡이동
 		AddMovementInput(
 			RightDirection,
 			LateralInput * 0.75f
 		);
+	}
 	
 
 	// 캐릭터 본체는 계속 전방을 바라봄
@@ -315,6 +333,14 @@ void ABattleCharacter::SetMapRotating(bool bRotating)
 void ABattleCharacter::Tick(float DeltaTime) {
 
 	Super::Tick(DeltaTime);
+	//UE_LOG(
+	//	LogTemp,
+	//	Warning,
+	//	TEXT("MovementMode = %d, IsFalling = %d, VelocityZ = %.2f"),
+	//	(int32)GetCharacterMovement()->MovementMode,
+	//	GetCharacterMovement()->IsFalling(),
+	//	GetCharacterMovement()->Velocity.Z
+	//);
 
 	if (!CanMove)
 	{
@@ -325,7 +351,6 @@ void ABattleCharacter::Tick(float DeltaTime) {
 	//AddMovementInput(MoveDirection, 1.0f);
 	UpdateRunnerMovement(DeltaTime);
 
-	// 점수 증가
-	Score += ScorePerSecond * DeltaTime;
+	
 
 }

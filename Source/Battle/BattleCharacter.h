@@ -69,11 +69,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Runner")
 	void SetMapRotating(bool bRotating);
 
-	UPROPERTY(BlueprintReadOnly, Category = "Score")
-	float Score = 0.0f;
+	
 
-	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Score")
-	float ScorePerSecond = 10.0f;
+	
 	
 
 protected:
