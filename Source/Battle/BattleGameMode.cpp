@@ -20,6 +20,11 @@ ABattleGameMode::ABattleGameMode()
 	}
 }
 
+void ABattleGameMode::IncrementCoin()
+{
+	CurrentCoin += 1;
+}
+
 void ABattleGameMode::BeginPlay() {
 	Super::BeginPlay();
 
