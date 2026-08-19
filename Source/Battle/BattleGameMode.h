@@ -41,6 +41,8 @@ private:
 	// 점수가 증가하는 시간 간격 (예: 0.1초마다 혹은 1초마다)
 	float ScoreInterval;
 
+	int DifficultyLevel = 0;
+
 };
 
 

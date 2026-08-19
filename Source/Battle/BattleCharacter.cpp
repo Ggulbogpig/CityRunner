@@ -11,6 +11,7 @@
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
 
+#include "BattleGameMode.h"
 #include "Spikes.h"
 #include "WallSpike.h"
 #include "Engine.h"
@@ -73,6 +74,8 @@ void ABattleCharacter::BeginPlay()
 	CurrentRunDirection = BaseRunDirection;
 
 	CanMove = true;
+
+	GetCharacterMovement()->MaxWalkSpeed = StartRunSpeed;
 
 	
 
@@ -160,6 +163,15 @@ void ABattleCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 //		AddMovementInput(RightDirection, MovementVector.X);
 //	}
 //}
+
+void ABattleCharacter::UpdateRunSpeed(int DifficultyLevel)
+{
+	const float NewSpeed =
+		StartRunSpeed + (DifficultyLevel * SpeedIncreaseAmount);
+
+	GetCharacterMovement()->MaxWalkSpeed =
+		FMath::Min(NewSpeed, MaxRunSpeed);
+}
 
 void ABattleCharacter::Move(const FInputActionValue& Value)
 {
@@ -350,6 +362,9 @@ void ABattleCharacter::Tick(float DeltaTime) {
 
 	//AddMovementInput(MoveDirection, 1.0f);
 	UpdateRunnerMovement(DeltaTime);
+
+	
+
 
 	
 

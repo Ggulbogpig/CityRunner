@@ -1,6 +1,7 @@
 // Copyright Epic Games, Inc. All Rights Reserved.
 
 #include "BattleGameMode.h"
+#include "Kismet/GameplayStatics.h"
 #include "BattleCharacter.h"
 #include "UObject/ConstructorHelpers.h"
 
@@ -40,6 +41,27 @@ void ABattleGameMode::IncrementScoreOverTime()
 
 	// 로그 출력 (디버깅용)
 	UE_LOG(LogTemp, Warning, TEXT("Running Score: %d"), CurrentScore);
+
+	const int NewDifficultyLevel = CurrentScore / 50;
+
+	// 아직 같은 50점 구간이면 아무것도 안 함
+	if (NewDifficultyLevel == DifficultyLevel)
+	{
+		return;
+	}
+
+	DifficultyLevel = NewDifficultyLevel;
+
+	ABattleCharacter* Player =
+		Cast<ABattleCharacter>(
+			UGameplayStatics::GetPlayerCharacter(this, 0)
+		);
+
+	if (Player)
+	{
+		Player->UpdateRunSpeed(DifficultyLevel);
+		UE_LOG(LogTemp, Warning, TEXT("Levelup"))
+	}
 }
 
 void ABattleGameMode::GameOver()

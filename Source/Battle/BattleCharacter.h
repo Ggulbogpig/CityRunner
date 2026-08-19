@@ -45,6 +45,8 @@ class ABattleCharacter : public ACharacter
 	UInputAction* LookAction;
 
 
+
+
 private:
 	FVector RunDirection;
 	FVector BaseRunDirection;
@@ -68,6 +70,22 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Runner")
 	void SetMapRotating(bool bRotating);
+
+	
+	// 속도 관련
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Speed")
+	float StartRunSpeed = 500.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Speed")
+	float SpeedIncreaseAmount = 100.0f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Speed")
+	float MaxRunSpeed = 1200.0f;
+
+	UFUNCTION(BlueprintCallable, Category = "Speed")
+	void UpdateRunSpeed(int DifficultyLevel);
+	
+
 
 	
 
