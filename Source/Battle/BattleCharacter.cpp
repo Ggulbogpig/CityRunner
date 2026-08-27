@@ -173,6 +173,99 @@ void ABattleCharacter::UpdateRunSpeed(int DifficultyLevel)
 		FMath::Min(NewSpeed, MaxRunSpeed);
 }
 
+//void ABattleCharacter::TriggerChaser()
+//{
+//	if (!ChaserEnemy)
+//	{
+//		return;
+//	}
+//
+//	// 첫 번째 충돌
+//	if (!bChaserActive)
+//	{
+//		bChaserActive = true;
+//
+//		CurrentChaserDistance = ChaserStartDistance;
+//
+//		ChaserEnemy->SetActorHiddenInGame(false);
+//		ChaserEnemy->SetActorEnableCollision(true);
+//
+//		GetWorldTimerManager().ClearTimer(ChaserTimerHandle);
+//
+//		GetWorldTimerManager().SetTimer(
+//			ChaserTimerHandle,
+//			this,
+//			&ABattleCharacter::HideChaser,
+//			ChaserDuration,
+//			false
+//		);
+//
+//		return;
+//	}
+//
+//	// 이미 추격 중인데 또 장애물에 부딪힘
+//	CatchPlayer();
+//}
+//
+//void ABattleCharacter::CatchPlayer()
+//{
+//	if (!ChaserEnemy)
+//	{
+//		return;
+//	}
+//
+//	GetWorldTimerManager().ClearTimer(ChaserTimerHandle);
+//
+//	// 일단 플레이어 바로 뒤로 이동
+//	const FVector CatchLocation =
+//		GetActorLocation()
+//		- BaseRunDirection * 100.0f;
+//
+//	ChaserEnemy->SetActorLocation(CatchLocation);
+//
+//	// 플레이어 정지
+//	CanMove = false;
+//
+//	// 여기서 Game Over 처리
+//}
+//
+//void ABattleCharacter::HideChaser()
+//{
+//	if (!ChaserEnemy) {
+//		return;
+//	}
+//	bChaserActive = false;
+//
+//	ChaserEnemy->SetActorHiddenInGame(true);
+//	ChaserEnemy->SetActorEnableCollision(false);
+//
+//	CurrentChaserDistance = ChaserStartDistance;
+//}
+//
+//void ABattleCharacter::UpdateChaserPosition()
+//{
+//	if (!bChaserActive || !ChaserEnemy) {
+//		return;
+//	}
+//
+//	const FVector ChaserLocation =
+//		GetActorLocation()
+//		- BaseRunDirection * CurrentChaserDistance;
+//}
+
+void ABattleCharacter::DieAndRestart()
+{
+	//GetMesh()->Deactivate();
+	//GetMesh()->SetVisibility(false);
+	SetActorHiddenInGame(true);
+	
+	//CanMove = false;
+	FTimerHandle UnusedHandle;
+	GetWorldTimerManager().SetTimer(UnusedHandle, this,
+		&ABattleCharacter::RestartLevel, 2.f, false);
+
+}
+
 void ABattleCharacter::Move(const FInputActionValue& Value)
 {
 	const FVector2D MovementVector = Value.Get<FVector2D>();
@@ -310,16 +403,14 @@ void ABattleCharacter::OnOverlapBegin(UPrimitiveComponent* OverlappedComp,
 			ComponentName == TEXT("Die2") ||
 			ComponentName == TEXT("Die3") ||
 			ComponentName == TEXT("Die4");
+		
 
-		if (WallSpike || Spike || bKillBox) {
-
-			GetMesh()->Deactivate();
-			GetMesh()->SetVisibility(false);
-
-			//CanMove = false;
-			FTimerHandle UnusedHandle;
-			GetWorldTimerManager().SetTimer(UnusedHandle, this,
-				&ABattleCharacter::RestartLevel, 2.f, false);
+		if (bKillBox) {
+			DieAndRestart();
+		}
+		else if (WallSpike || Spike) {
+			OnTriggerChase();
+			
 		}
 
 
@@ -345,14 +436,6 @@ void ABattleCharacter::SetMapRotating(bool bRotating)
 void ABattleCharacter::Tick(float DeltaTime) {
 
 	Super::Tick(DeltaTime);
-	//UE_LOG(
-	//	LogTemp,
-	//	Warning,
-	//	TEXT("MovementMode = %d, IsFalling = %d, VelocityZ = %.2f"),
-	//	(int32)GetCharacterMovement()->MovementMode,
-	//	GetCharacterMovement()->IsFalling(),
-	//	GetCharacterMovement()->Velocity.Z
-	//);
 
 	if (!CanMove)
 	{
@@ -362,6 +445,10 @@ void ABattleCharacter::Tick(float DeltaTime) {
 
 	//AddMovementInput(MoveDirection, 1.0f);
 	UpdateRunnerMovement(DeltaTime);
+
+	//if (bChaserActive) {
+	//	UpdateChaserPosition();
+	//}
 
 	
 

@@ -47,6 +47,10 @@ class ABattleCharacter : public ACharacter
 
 
 
+
+
+
+
 private:
 	FVector RunDirection;
 	FVector BaseRunDirection;
@@ -84,6 +88,53 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Speed")
 	void UpdateRunSpeed(int DifficultyLevel);
+
+	//////////////////////////////////////////////////////////
+	//추격자 클래스
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Runner|Chaser")
+	//TSubclassOf<AActor> ChaserEnemyClass;
+	//추격자
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chaser")
+	//AActor* ChaserEnemy = nullptr;
+
+	//처음 등장할 때 플레이어와의 거리
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chaser")
+	//float ChaserStartDistance = 1000.0f;
+
+	//추가 충돌 시 얼마나 가까워질지
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chaser")
+	//float ChaserApproachAmount = 300.0f;
+
+	//최소 거리
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chaser")
+	//float ChaserMinDistance = 250.0f;
+
+	//추격 유지 시간
+	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Chaser")
+	//float ChaserDuration = 5.0f;
+
+
+	//UPROPERTY(BlueprintReadOnly, Category = "Chaser")
+	//bool bChaserActive = false;
+
+	//float CurrentChaserDistance = 1000.0f;
+
+	//FTimerHandle ChaserTimerHandle;
+
+	//UFUNCTION(BlueprintCallable, Category="Chaser")
+	//void TriggerChaser();
+
+	//void HideChaser();
+
+	//void CatchPlayer();
+
+	//void UpdateChaserPosition();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "Chaser")
+	void OnTriggerChase();
+
+	UFUNCTION(BlueprintCallable, Category = "Runner")
+	void DieAndRestart();
 	
 
 
