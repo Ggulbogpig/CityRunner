@@ -5,10 +5,12 @@
 #include "BaseLevel.h"
 #include "Engine.h"
 #include "Components/BoxComponent.h"
+#include "BattleCharacter.h"
 
 // Sets default values
 ASpawnLevel::ASpawnLevel()
 {
+
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
@@ -35,6 +37,10 @@ void ASpawnLevel::Tick(float DeltaTime)
 
 void ASpawnLevel::SpawnLevel(bool IsFirst)
 {
+	UE_LOG(LogTemp, Warning,
+		TEXT("SpawnLevel called / count before: %d"),
+		LevelList.Num());
+
 	SpawnLocation = FVector(0.0f, 0.0f, 0.0f);
 	SpawnRotation = FRotator(0, 0, 0);
 
@@ -97,6 +103,9 @@ void ASpawnLevel::SpawnLevel(bool IsFirst)
 
 		if (IsValid(OldLevel))
 		{
+			UE_LOG(LogTemp, Warning,
+				TEXT("DESTROY LEVEL: %s"),
+				*GetNameSafe(LevelList[0]));
 			OldLevel->Destroy();
 		}
 		LevelList.RemoveAt(0);
@@ -105,7 +114,20 @@ void ASpawnLevel::SpawnLevel(bool IsFirst)
 
 void ASpawnLevel::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
 {
-	SpawnLevel(false);
+
+	
+	if (Cast<ABattleCharacter>(OtherActor))
+	{
+		UE_LOG(LogTemp, Warning,
+			TEXT("TRIGGER=%s / OWNER=%s / PLAYER=%s / LevelCount=%d"),
+			*GetNameSafe(OverlappedComp),
+			*GetNameSafe(OverlappedComp ? OverlappedComp->GetOwner() : nullptr),
+			*GetNameSafe(OtherActor),
+			LevelList.Num());
+
+		SpawnLevel(false);
+	}
+
 }
 
 
