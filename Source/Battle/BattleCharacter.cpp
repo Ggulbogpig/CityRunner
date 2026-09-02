@@ -368,14 +368,14 @@ void ABattleCharacter::UpdateRunnerMovement(
 void ABattleCharacter::Look(const FInputActionValue& Value)
 {
 	// input is a Vector2D
-	FVector2D LookAxisVector = Value.Get<FVector2D>();
+	//FVector2D LookAxisVector = Value.Get<FVector2D>();
 
-	if (Controller != nullptr)
-	{
-		// add yaw and pitch input to controller
-		AddControllerYawInput(LookAxisVector.X);
-		AddControllerPitchInput(LookAxisVector.Y);
-	}
+	//if (Controller != nullptr)
+	//{
+	//	// add yaw and pitch input to controller
+	//	AddControllerYawInput(LookAxisVector.X);
+	//	AddControllerPitchInput(LookAxisVector.Y);
+	//}
 }
 void ABattleCharacter::RestartLevel() {
 	UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName()));
