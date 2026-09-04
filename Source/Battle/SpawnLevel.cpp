@@ -14,6 +14,8 @@ ASpawnLevel::ASpawnLevel()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+
+
 }
 
 // Called when the game starts or when spawned
@@ -47,7 +49,12 @@ void ASpawnLevel::SpawnLevel(bool IsFirst)
 	if (!IsFirst) {
 		ABaseLevel* LastLevel = LevelList.Last();
 		SpawnLocation = LastLevel->GetSpawnLocation()->GetComponentTransform().GetTranslation();
+
+		UE_LOG(LogTemp, Warning,
+			TEXT("NextSpawn = %s"),
+			*SpawnLocation.ToString());
 	}
+	
 
 	RandomLevel = FMath::RandRange(1, 9);
 	ABaseLevel* NewLevel = nullptr;
@@ -90,6 +97,11 @@ void ASpawnLevel::SpawnLevel(bool IsFirst)
 	}
 
 	if (NewLevel) {
+
+		UE_LOG(LogTemp, Warning,
+			TEXT("Spawned Location = %s"),
+			*NewLevel->GetActorLocation().ToString());
+
 		OnLevelSpawned(NewLevel);
 
 		if (NewLevel->GetTrigger()) {
@@ -112,22 +124,49 @@ void ASpawnLevel::SpawnLevel(bool IsFirst)
 	}
 }
 
-void ASpawnLevel::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
-{
+//void ASpawnLevel::OnOverlapBegin(UPrimitiveComponent* OverlappedComp, AActor* OtherActor, UPrimitiveComponent* OtherComp, int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult)
+//{
+//
+//	
+//	if (Cast<ABattleCharacter>(OtherActor))
+//	{
+//		UE_LOG(LogTemp, Warning,
+//			TEXT("TRIGGER OWNER=%s / OtherComp=%s / LevelCount=%d"),
+//			*GetNameSafe(OverlappedComp ? OverlappedComp->GetOwner() : nullptr),
+//			*GetNameSafe(OtherComp),
+//			LevelList.Num());
+//
+//
+//		SpawnLevel(false);
+//	}
+//
+//}
 
-	
+void ASpawnLevel::OnOverlapBegin(
+	UPrimitiveComponent* OverlappedComp,
+	AActor* OtherActor,
+	UPrimitiveComponent* OtherComp,
+	int32 OtherBodyIndex,
+	bool bFromSweep,
+	const FHitResult& SweepResult)
+{
 	if (Cast<ABattleCharacter>(OtherActor))
 	{
 		UE_LOG(LogTemp, Warning,
-			TEXT("TRIGGER=%s / OWNER=%s / PLAYER=%s / LevelCount=%d"),
-			*GetNameSafe(OverlappedComp),
+			TEXT("TRIGGER OWNER=%s / OtherComp=%s / LevelCount=%d"),
 			*GetNameSafe(OverlappedComp ? OverlappedComp->GetOwner() : nullptr),
-			*GetNameSafe(OtherActor),
+			*GetNameSafe(OtherComp),
 			LevelList.Num());
+
+		// 이 Trigger는 한 번만 사용
+		if (OverlappedComp)
+		{
+			OverlappedComp->SetGenerateOverlapEvents(false);
+			OverlappedComp->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+		}
 
 		SpawnLevel(false);
 	}
-
 }
 
 

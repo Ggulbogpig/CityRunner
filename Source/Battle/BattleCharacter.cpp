@@ -268,9 +268,27 @@ void ABattleCharacter::DieAndRestart()
 
 void ABattleCharacter::Move(const FInputActionValue& Value)
 {
+	//테스트 모드
+	//FVector2D MovementVector = Value.Get<FVector2D>();
+
+	//if (Controller != nullptr)
+	//{
+	//	const FRotator Rotation = Controller->GetControlRotation();
+	//	const FRotator YawRotation(0, Rotation.Yaw, 0);
+
+	//	const FVector ForwardDirection =
+	//		FRotationMatrix(YawRotation).GetUnitAxis(EAxis::X);
+
+	//	const FVector RightDirection =
+	//		FRotationMatrix(YawRotation).GetUnitAxis(EAxis::Y);
+
+	//	AddMovementInput(ForwardDirection, MovementVector.Y);
+	//	AddMovementInput(RightDirection, MovementVector.X);
+	//}
+	//자동전진모드
 	const FVector2D MovementVector = Value.Get<FVector2D>();
 
-	if (!Controller || bOnWall)
+	if (!Controller)
 	{
 		LateralInput = 0.0f;
 		return;
@@ -296,86 +314,190 @@ void ABattleCharacter::StopMove(const FInputActionValue& Value)
 	LateralInput = 0.0f;
 }
 
-void ABattleCharacter::UpdateRunnerMovement(
-	float DeltaTime)
-{
 
-	FVector MoveDirection;
-	const FVector RightDirection =
-		FVector::CrossProduct(
-			FVector::UpVector,
-			BaseRunDirection
-		).GetSafeNormal();
-	// 항상 기준 진행 방향으로 자동 전진
+//void ABattleCharacter::UpdateRunnerMovement(float DeltaTime)
+//{
+//
+//
+//	const FVector RightDirection =
+//		FVector::CrossProduct(
+//			FVector::UpVector,
+//			BaseRunDirection
+//		).GetSafeNormal();
+//
+//	// 자동 전진은 계속
+//	AddMovementInput(BaseRunDirection, 1.0f);
+//
+//	if (GetCharacterMovement()->IsFalling())
+//	{
+//		FVector Velocity = GetCharacterMovement()->Velocity;
+//
+//		const float AirSideSpeed = 400.0f;
+//
+//		const float CurrentSideSpeed =
+//			FVector::DotProduct(Velocity, RightDirection);
+//
+//		Velocity -= RightDirection * CurrentSideSpeed;
+//		Velocity += RightDirection * (LateralInput * AirSideSpeed);
+//
+//		GetCharacterMovement()->Velocity = Velocity;
+//	}
+//	else
+//	{
+//		AddMovementInput(
+//			RightDirection,
+//			LateralInput * 0.75f
+//		);
+//	}
+//
+//	// 벽타기 중에는 플러그인이 Rotation을 담당하게 둠
+//	if (!bOnWall)
+//	{
+//		const FRotator TargetRotation =
+//			BaseRunDirection.Rotation();
+//
+//		const FRotator NewRotation =
+//			FMath::RInterpTo(
+//				GetActorRotation(),
+//				TargetRotation,
+//				DeltaTime,
+//				10.0f
+//			);
+//
+//		SetActorRotation(NewRotation);
+//	}
+//
+//	const FVector Velocity = GetVelocity();
+//	const float ForwardSpeed =
+//		FVector::DotProduct(Velocity, BaseRunDirection);
+//
+//	UE_LOG(
+//		LogTemp,
+//		Warning,
+//		TEXT("OnWall=%d TotalSpeed=%.1f ForwardSpeed=%.1f Velocity=%s"),
+//		bOnWall,
+//		Velocity.Size(),
+//		ForwardSpeed,
+//		*Velocity.ToString()
+//	);
+//
+//	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
+//
+//	const FVector CurrentVelocity = MoveComp->Velocity;
+//
+//
+//
+//	const FVector Accel = MoveComp->GetCurrentAcceleration();
+//	const FVector LastInput = GetLastMovementInputVector();
+//
+//	UE_LOG(
+//		LogTemp,
+//		Warning,
+//		TEXT("[%s] Wall=%d Mode=%d Vel=%.1f Forward=%.1f "
+//			"Accel=%s Input=%s MaxSpeed=%.1f Friction=%.2f Brake=%.1f"),
+//		*GetName(),
+//		bOnWall,
+//		(int32)MoveComp->MovementMode,
+//		CurrentVelocity.Size(),
+//		ForwardSpeed,
+//		*Accel.ToString(),
+//		*LastInput.ToString(),
+//		MoveComp->MaxWalkSpeed,
+//		MoveComp->GroundFriction,
+//		MoveComp->BrakingDecelerationWalking
+//	);
+//}
+
+void ABattleCharacter::UpdateRunnerMovement(float DeltaTime)
+{
+	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
+
+	// 자동 전진
 	AddMovementInput(BaseRunDirection, 1.0f);
 
-	//if (GetCharacterMovement() -> IsFalling()) {
-	//	UE_LOG(LogTemp, Warning, TEXT("isflying"));
-	//}
-
-	//if (bOnWall)
-	//{
-	//	MoveDirection = FVector::ForwardVector;
-	//}
-	//else
-	//{
-	//	MoveDirection = GetActorForwardVector();
-	//	MoveDirection.Z = 0.0f;
-	//	MoveDirection.Normalize();
-	//}
-	if (GetCharacterMovement()->IsFalling())
+	if (bOnWall)
 	{
-		FVector Velocity = GetCharacterMovement()->Velocity;
+		// 벽의 평면 안에서의 좌우 방향
+		const FVector WallSideDirection =
+			FVector::CrossProduct(
+				CurrentWallNormal,
+				BaseRunDirection
+			).GetSafeNormal();
 
-		const float AirSideSpeed = 400.0f;
-
-		// 현재 전진/수직 속도는 유지하고,
-		// 좌우 성분만 직접 결정
-		const float CurrentSideSpeed =
-			FVector::DotProduct(Velocity, RightDirection);
-
-		Velocity -= RightDirection * CurrentSideSpeed;
-		Velocity += RightDirection * (LateralInput * AirSideSpeed);
-
-		GetCharacterMovement()->Velocity = Velocity;
-	}
-	else {
-		// 키를 누르는 동안만 좌우 횡이동
 		AddMovementInput(
-			RightDirection,
+			WallSideDirection,
 			LateralInput * 0.75f
 		);
-	}
-	
-
-	// 캐릭터 본체는 계속 전방을 바라봄
-	const FRotator TargetRotation =
-		BaseRunDirection.Rotation();
-
-	const FRotator NewRotation =
-		FMath::RInterpTo(
-			GetActorRotation(),
-			TargetRotation,
-			DeltaTime,
-			10.0f
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("WALL MOVE | Lateral=%.2f Normal=%s Base=%s Side=%s"),
+			LateralInput,
+			*CurrentWallNormal.ToString(),
+			*BaseRunDirection.ToString(),
+			*WallSideDirection.ToString()
 		);
+	}
+	else
+	{
+		const FVector RightDirection =
+			FVector::CrossProduct(
+				FVector::UpVector,
+				BaseRunDirection
+			).GetSafeNormal();
 
-	
+		if (MoveComp->IsFalling())
+		{
+			FVector Velocity = MoveComp->Velocity;
 
-	SetActorRotation(NewRotation);
+			const float AirSideSpeed = 400.0f;
+
+			const float CurrentSideSpeed =
+				FVector::DotProduct(Velocity, RightDirection);
+
+			Velocity -= RightDirection * CurrentSideSpeed;
+			Velocity += RightDirection *
+				(LateralInput * AirSideSpeed);
+
+			MoveComp->Velocity = Velocity;
+		}
+		else
+		{
+			AddMovementInput(
+				RightDirection,
+				LateralInput * 0.75f
+			);
+		}
+	}
+
+	// 이건 지금처럼 벽에서는 하지 않음
+	if (!bOnWall)
+	{
+		const FRotator TargetRotation =
+			BaseRunDirection.Rotation();
+
+		const FRotator NewRotation =
+			FMath::RInterpTo(
+				GetActorRotation(),
+				TargetRotation,
+				DeltaTime,
+				10.0f
+			);
+
+		SetActorRotation(NewRotation);
+	}
 }
-
 void ABattleCharacter::Look(const FInputActionValue& Value)
 {
 	// input is a Vector2D
-	//FVector2D LookAxisVector = Value.Get<FVector2D>();
+	FVector2D LookAxisVector = Value.Get<FVector2D>();
 
-	//if (Controller != nullptr)
-	//{
-	//	// add yaw and pitch input to controller
-	//	AddControllerYawInput(LookAxisVector.X);
-	//	AddControllerPitchInput(LookAxisVector.Y);
-	//}
+	if (Controller != nullptr)
+	{
+		// add yaw and pitch input to controller
+		AddControllerYawInput(LookAxisVector.X);
+		AddControllerPitchInput(LookAxisVector.Y);
+	}
 }
 void ABattleCharacter::RestartLevel() {
 	UGameplayStatics::OpenLevel(this, FName(*GetWorld()->GetName()));

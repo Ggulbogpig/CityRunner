@@ -89,6 +89,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Speed")
 	void UpdateRunSpeed(int DifficultyLevel);
 
+	UPROPERTY(BlueprintReadWrite, Category = "WallRun")
+	FVector CurrentWallNormal = FVector::ZeroVector;
+
 	//////////////////////////////////////////////////////////
 	//추격자 클래스
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Runner|Chaser")
