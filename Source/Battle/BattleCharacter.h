@@ -40,6 +40,10 @@ class ABattleCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* MoveAction;
 
+	/** Slide Input Action */
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* SlideAction;
+
 	/** Look Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* LookAction;
@@ -67,6 +71,13 @@ public:
 	bool bOnWall = false;
 	bool CanMove = true;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Movement")
+	bool bIsSliding = false;
+
+
+	float DefaultCapsuleHalfHeight;
+	float SlideCapsuleHalfHeight = 48.0f;
+
 	// BattleCharacter.h
 
 	UPROPERTY(BlueprintReadWrite, Category = "Runner")
@@ -91,6 +102,10 @@ public:
 
 	UPROPERTY(BlueprintReadWrite, Category = "WallRun")
 	FVector CurrentWallNormal = FVector::ZeroVector;
+
+
+
+
 
 	//////////////////////////////////////////////////////////
 	//추격자 클래스
@@ -161,6 +176,9 @@ protected:
 
 	UFUNCTION(BlueprintCallable, Category="Runner")
 	void StartWallTransition();
+
+	void StartSlide();
+	void EndSlide();
 	
 			
 

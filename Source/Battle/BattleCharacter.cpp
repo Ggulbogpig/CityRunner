@@ -45,6 +45,8 @@ ABattleCharacter::ABattleCharacter()
 
 	JumpMaxCount = 2;
 
+	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
+
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
 	CameraBoom->SetupAttachment(RootComponent);
@@ -58,6 +60,16 @@ ABattleCharacter::ABattleCharacter()
 
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
+	//슬라이드 추가
+	static ConstructorHelpers::FObjectFinder<UInputAction> SlideActionAsset(
+		TEXT("/Game/IA_Slide.IA_Slide")
+	);
+
+	if (SlideActionAsset.Succeeded())
+	{
+		SlideAction = SlideActionAsset.Object;
+	}
+
 }
 
 void ABattleCharacter::BeginPlay()
@@ -70,6 +82,8 @@ void ABattleCharacter::BeginPlay()
 	BaseRunDirection.Z = 0.0f;
 	BaseRunDirection.Normalize();
 	LateralInput = 0.0f;
+	//초기 캡슐 높이값 저장
+	DefaultCapsuleHalfHeight = GetCapsuleComponent()->GetUnscaledCapsuleHalfHeight();
 
 	CurrentRunDirection = BaseRunDirection;
 
@@ -127,6 +141,59 @@ void ABattleCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 			this,
 			&ABattleCharacter::StopMove
 		);
+
+		//EnhancedInputComponent->BindAction(
+		//	SlideAction,
+		//	ETriggerEvent::Started,
+		//	this,
+		//	&ABattleCharacter::StartSlide
+		//);
+
+		//EnhancedInputComponent->BindAction(
+		//	SlideAction,
+		//	ETriggerEvent::Completed,
+		//	this,
+		//	&ABattleCharacter::EndSlide
+		//);
+
+		//EnhancedInputComponent->BindAction(
+		//	SlideAction,
+		//	ETriggerEvent::Canceled,
+		//	this,
+		//	&ABattleCharacter::EndSlide
+		//);
+		if (SlideAction)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("SlideAction VALID"));
+
+			EnhancedInputComponent->BindAction(
+				SlideAction,
+				ETriggerEvent::Started,
+				this,
+				&ABattleCharacter::StartSlide
+			);
+
+			EnhancedInputComponent->BindAction(
+				SlideAction,
+				ETriggerEvent::Completed,
+				this,
+				&ABattleCharacter::EndSlide
+			);
+
+			EnhancedInputComponent->BindAction(
+				SlideAction,
+				ETriggerEvent::Canceled,
+				this,
+				&ABattleCharacter::EndSlide
+			);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("SlideAction NULL"));
+		}
+
+
+
 
 		// Looking
 		EnhancedInputComponent->BindAction(LookAction, ETriggerEvent::Triggered, this, &ABattleCharacter::Look);
@@ -313,6 +380,34 @@ void ABattleCharacter::StopMove(const FInputActionValue& Value)
 {
 	LateralInput = 0.0f;
 }
+
+void ABattleCharacter::StartSlide()
+{
+	UE_LOG(LogTemp, Warning, TEXT("START SLIDE"));
+	if (bIsSliding)
+		return;
+
+	bIsSliding = true;
+
+	// 캡슐 높이 축소
+	Crouch();
+	
+}
+
+void ABattleCharacter::EndSlide()
+{
+	UE_LOG(LogTemp, Warning, TEXT("End SLIDE"));
+	if (!bIsSliding)
+		return;
+
+	bIsSliding = false;
+
+	// 원래 캡슐 높이로 복구
+	UnCrouch();
+
+}
+
+
 
 
 //void ABattleCharacter::UpdateRunnerMovement(float DeltaTime)
