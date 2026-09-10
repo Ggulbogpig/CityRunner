@@ -625,7 +625,7 @@ void ABattleCharacter::OnOverlapBegin(UPrimitiveComponent* OverlappedComp,
 		if (bKillBox) {
 			DieAndRestart();
 		}
-		else if (WallSpike || Spike) {
+		else if ((WallSpike || Spike) && Cast<UStaticMeshComponent>(OtherComp)) {
 			OnTriggerChase();
 			
 		}
