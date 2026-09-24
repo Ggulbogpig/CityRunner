@@ -5,6 +5,8 @@
 #include "BaseLevel.h"
 #include "Engine.h"
 #include "Components/BoxComponent.h"
+#include "Kismet/GameplayStatics.h"
+#include "Components/CapsuleComponent.h"
 #include "BattleCharacter.h"
 
 // Sets default values
@@ -22,6 +24,7 @@ ASpawnLevel::ASpawnLevel()
 void ASpawnLevel::BeginPlay()
 {
 	Super::BeginPlay();
+
 
 	SpawnLevel(true);
 	SpawnLevel(false);
@@ -168,6 +171,7 @@ void ASpawnLevel::OnOverlapBegin(
 		SpawnLevel(false);
 	}
 }
+
 
 
 

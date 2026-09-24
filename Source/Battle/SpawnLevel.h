@@ -37,8 +37,11 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnLevelSpawned(ABaseLevel* NewLevel);
 
+
+
 protected:
 	APawn* Player;
+
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<ABaseLevel> Level1;
