@@ -20,16 +20,22 @@ AABCharacter::AABCharacter()
 	SpringArm->TargetArmLength = 400.0f;
 	SpringArm->SetRelativeRotation(FRotator(-15.0f, 0.0f, 0.0f));
 
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_CARDBOARD(TEXT("/Script/Engine.SkeletalMesh'/Game/Anim/Exo_Gray.Exo_Gray'"));
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_CARDBOARD(TEXT("/Game/Anim/Exo_Gray.Exo_Gray" ));
 	if (SK_CARDBOARD.Succeeded()) {
 		GetMesh()->SetSkeletalMesh(SK_CARDBOARD.Object);
 	}
 	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 
-	static ConstructorHelpers::FClassFinder<UAnimInstance> WARRIOR_ANIM(TEXT("/Script/Engine.AnimBlueprint'/Game/Anim/WarriorAnimBlueprint.WarriorAnimBlueprint_C'"));
-	if (WARRIOR_ANIM.Succeeded()) {
-		GetMesh()->SetAnimInstanceClass(WARRIOR_ANIM.Class);
-	}
+	//static ConstructorHelpers::FClassFinder<UAnimInstance> WARRIOR_ANIM(TEXT("/Game/Anim/WarriorAnimBlueprint"));
+	//if (WARRIOR_ANIM.Succeeded()) {
+	//	GetMesh()->SetAnimInstanceClass(WARRIOR_ANIM.Class);
+	//}
+	//생성자에선 주소값 저장만 관리 
+	WarriorAnimClass = TSoftClassPtr<UAnimInstance>(
+		FSoftObjectPath(
+			TEXT("/Game/Anim/WarriorAnimBlueprint.WarriorAnimBlueprint_C")
+		)
+	);
 
 	SetControlMode(EControlMode::GTA);
 	SetRunnerState(ERunnerState::GroundRunning);
@@ -48,7 +54,25 @@ AABCharacter::AABCharacter()
 // Called when the game starts or when spawned
 void AABCharacter::BeginPlay()
 {
+
 	Super::BeginPlay();
+
+	//시작 후 로딩
+	//if (UClass* LoadedAnimClass = WarriorAnimClass.LoadSynchronous())
+	//{
+	//	GetMesh()->SetAnimationMode(EAnimationMode::AnimationBlueprint);
+	//	GetMesh()->SetAnimInstanceClass(LoadedAnimClass);
+	//}
+	//else
+	//{
+	//	UE_LOG(
+	//		LogTemp,
+	//		Error,
+	//		TEXT("WarriorAnimBlueprint load failed")
+	//	);
+	//}
+
+
 	
 }
 
@@ -269,6 +293,7 @@ void AABCharacter::HandleAutoRun() {
 		return;
 	}
 
+	
 	AddMovementInput(GetActorForwardVector(), 1.0f);
 }
 

@@ -45,6 +45,12 @@ public:
 	UPROPERTY(VisibleAnywhere, Category=Camera)
 	UCameraComponent* Camera;
 
+	UPROPERTY(EditDefaultsOnly, Category = "Animation")
+	TSoftObjectPtr<UAnimationAsset> WalkingAnim;
+
+	UPROPERTY()
+	TSoftClassPtr<UAnimInstance> WarriorAnimClass;
+
 private:
 	void UpDown(float NewAxisValue);
 	void LeftRight(float NewAxisValue);

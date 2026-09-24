@@ -8,16 +8,22 @@
 ABattleGameMode::ABattleGameMode()
 {
 	// set default pawn class to our Blueprinted character
-	static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter1"));
+	//static ConstructorHelpers::FClassFinder<APawn> PlayerPawnBPClass(TEXT("/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter1"));
 	CurrentScore = 0;
 	ScoreTickAmount = 5;
 	ScoreInterval = 1.0f;
-	///Game/Characters/BP_Character
-	///Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter1
-	if (PlayerPawnBPClass.Class != NULL)
-	{
-		DefaultPawnClass = PlayerPawnBPClass.Class;
-	}
+	//Game/Characters/BP_Character
+	//Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter1
+	//if (PlayerPawnBPClass.Class != NULL)
+	//{
+	//	DefaultPawnClass = PlayerPawnBPClass.Class;
+	//}
+	//생성자에선 경로만 지정
+	PlayerPawnClass = TSoftClassPtr<APawn>(
+		FSoftObjectPath(
+			TEXT("/Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter1.BP_ThirdPersonCharacter1_C")
+		)
+	);
 }
 
 void ABattleGameMode::IncrementCoin()
@@ -27,6 +33,7 @@ void ABattleGameMode::IncrementCoin()
 
 void ABattleGameMode::BeginPlay() {
 	Super::BeginPlay();
+
 
 	// 게임 시작 시 타이머 세팅
 // 1.0초(ScoreInterval)마다 반복(true)해서 IncrementScoreOverTime 함수를 호출합니다.

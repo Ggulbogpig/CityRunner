@@ -28,17 +28,26 @@ AABPawn::AABPawn()
 	SpringArm->TargetArmLength = 400.0f;
 	SpringArm->SetRelativeRotation(FRotator(-15.0f, 0.0f, 0.0f));
 
-	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_CARDBOARD(TEXT("/Script/Engine.SkeletalMesh'/Game/Characters/character__2_.character__2_'"));
+	static ConstructorHelpers::FObjectFinder<USkeletalMesh> SK_CARDBOARD(TEXT("/Game/Characters/character__2_.character__2_"));
 	if (SK_CARDBOARD.Succeeded()) {
 		Mesh->SetSkeletalMesh(SK_CARDBOARD.Object);
 	}
 
 	Mesh->SetAnimationMode(EAnimationMode::AnimationBlueprint);
 
-	static ConstructorHelpers::FClassFinder<UAnimInstance> WARRIOR_ANIM(TEXT("/Script/Engine.AnimBlueprint'/Game/Anim/WarriorAnimBlueprint.WarriorAnimBlueprint_C'"));
-	if (WARRIOR_ANIM.Succeeded()) {
-		Mesh->SetAnimInstanceClass(WARRIOR_ANIM.Class);
-	} //애니메이션 로드 방식 2 (애님 그래프 블루프린트 이용)
+	//static ConstructorHelpers::FClassFinder<UAnimInstance> WARRIOR_ANIM(TEXT("/Game/Anim/WarriorAnimBlueprint"));
+	//if (WARRIOR_ANIM.Succeeded()) {
+	//	Mesh->SetAnimInstanceClass(WARRIOR_ANIM.Class);
+	//} //애니메이션 로드 방식 2 (애님 그래프 블루프린트 이용)
+
+	WalkingAnim = TSoftObjectPtr<UAnimationAsset>(
+		FSoftObjectPath(TEXT("/Game/Anim/walking.walking"))
+	);
+	WarriorAnimClass = TSoftClassPtr<UAnimInstance>(
+		FSoftObjectPath(
+			TEXT("/Game/Anim/WarriorAnimBlueprint.WarriorAnimBlueprint_C")
+		)
+	);
 
 }
 
@@ -52,6 +61,25 @@ void AABPawn::BeginPlay()
 	//if (AnimAsset != nullptr) {
 	//	Mesh->PlayAnimation(AnimAsset, true);
 	//}
+	//if (UClass* LoadedAnimClass = WarriorAnimClass.LoadSynchronous())
+	//{
+	//	Mesh->SetAnimationMode(
+	//		EAnimationMode::AnimationBlueprint
+	//	);
+
+	//	Mesh->SetAnimInstanceClass(
+	//		LoadedAnimClass
+	//	);
+	//}
+	//else
+	//{
+	//	UE_LOG(
+	//		LogTemp,
+	//		Error,
+	//		TEXT("WarriorAnimBlueprint load failed")
+	//	);
+	//}
+
 }
 
 // Called every frame

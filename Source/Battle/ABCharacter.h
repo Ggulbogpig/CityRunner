@@ -19,6 +19,8 @@ public:
 	UPROPERTY(BlueprintReadWrite, Category = "WallRun")
 	bool bOnWall = false;
 
+
+
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
@@ -60,6 +62,9 @@ public:
 
 	UPROPERTY(VisibleAnywhere, Category = Camera)
 	UCameraComponent* Camera;
+
+	UPROPERTY()
+	TSoftClassPtr<UAnimInstance> WarriorAnimClass;
 
 private:
 	void UpDown(float NewAxisValue);

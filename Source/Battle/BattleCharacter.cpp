@@ -506,6 +506,10 @@ void ABattleCharacter::EndSlide()
 void ABattleCharacter::UpdateRunnerMovement(float DeltaTime)
 {
 	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
+	if (bMapRotating)
+	{
+		return;
+	}
 
 	// 자동 전진
 	AddMovementInput(BaseRunDirection, 1.0f);
@@ -647,6 +651,7 @@ void ABattleCharacter::SetMapRotating(bool bRotating)
 	if (bMapRotating)
 	{
 		LateralInput = 0.0f;
+		GetCharacterMovement()->StopMovementImmediately();
 	}
 }
 

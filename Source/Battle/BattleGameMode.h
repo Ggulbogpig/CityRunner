@@ -32,6 +32,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Score")
 	void IncrementCoin();
 
+	UPROPERTY()
+	TSoftClassPtr<APawn> PlayerPawnClass;
+
 protected:
 	// 게임 시작 시 타이머를 가동하기 위해 BeginPlay 오버라이드
 	virtual void BeginPlay() override;
