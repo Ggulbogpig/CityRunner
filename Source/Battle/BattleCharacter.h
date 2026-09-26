@@ -13,6 +13,17 @@ class UInputMappingContext;
 class UInputAction;
 struct FInputActionValue;
 
+
+UENUM(BlueprintType)
+enum class ETunnelOrientation : uint8
+{
+	Floor       UMETA(DisplayName = "Floor"),
+	RightWall   UMETA(DisplayName = "RightWall"),
+	Ceiling     UMETA(DisplayName = "Ceiling"),
+	LeftWall    UMETA(DisplayName = "LeftWall")
+};
+
+
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
 UCLASS(config=Game)
@@ -27,6 +38,9 @@ class ABattleCharacter : public ACharacter
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FollowCamera;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	USceneComponent* CameraRollRoot;
 	
 	/** MappingContext */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -89,7 +103,7 @@ public:
 	
 	// 속도 관련
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Speed")
-	float StartRunSpeed = 500.0f;
+	float StartRunSpeed = 800.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Speed")
 	float SpeedIncreaseAmount = 100.0f;
@@ -100,13 +114,36 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Speed")
 	void UpdateRunSpeed(int DifficultyLevel);
 
+
+
 	UPROPERTY(BlueprintReadWrite, Category = "WallRun")
 	FVector CurrentWallNormal = FVector::ZeroVector;
 
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tunnel")
+	ETunnelOrientation CurrentTunnelOrientation = ETunnelOrientation::Floor;
 
 
+	UFUNCTION(BlueprintCallable)
+	void SetTunnelOrientation(ETunnelOrientation NewOrientation);
 
+	UFUNCTION(BlueprintCallable)
+	void RotateTunnelOrientationRight();
+
+	UFUNCTION(BlueprintCallable)
+	void RotateTunnelOrientationLeft();
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* TestGravityAction;
+
+	UFUNCTION()
+	void TestRightGravity();
+
+	UFUNCTION(BlueprintCallable)
+	void TestRightOrientation();
+
+	UFUNCTION(BlueprintCallable)
+	void TestLeftOrientation();
 	//////////////////////////////////////////////////////////
 	//추격자 클래스
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Runner|Chaser")
@@ -153,7 +190,34 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Runner")
 	void DieAndRestart();
-	
+
+
+
+	// 카메라 회전 시작
+	UFUNCTION(BlueprintCallable, Category = "Camera")
+	void RotateCameraRight();
+
+	UFUNCTION(BlueprintCallable, Category = "Camera")
+	void RotateCameraLeft();
+
+	void UpdateCameraRoll(float DeltaTime);
+
+	UFUNCTION(BlueprintCallable, Category = "Tunnel")
+	void RestoreTunnelGravity();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "WallRun")
+	void RequestWallOff();
+
+
+private:
+	bool bCameraRotating = false;
+
+	float CameraRollStart = 0.0f;
+	float CameraRollTarget = 0.0f;
+	float CameraRollElapsed = 0.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Camera")
+	float CameraRollDuration = 0.8f;
 
 
 	

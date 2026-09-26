@@ -47,17 +47,41 @@ ABattleCharacter::ABattleCharacter()
 
 	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
 
+	//카메라 회전 수정 전
 	// Create a camera boom (pulls in towards the player if there is a collision)
-	CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
+	//CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
+	//CameraBoom->SetupAttachment(RootComponent);
+	//CameraBoom->TargetArmLength = 400.0f; // The camera follows at this distance behind the character	
+	//CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
+
+	//// Create a follow camera
+	//FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
+	//FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
+	//FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+	
+	//카메라 회전 기준 수정 후
+	// Camera Boom
+	CameraBoom =
+		CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
+
 	CameraBoom->SetupAttachment(RootComponent);
-	CameraBoom->TargetArmLength = 400.0f; // The camera follows at this distance behind the character	
-	CameraBoom->bUsePawnControlRotation = true; // Rotate the arm based on the controller
+	CameraBoom->TargetArmLength = 400.0f;
+	CameraBoom->bUsePawnControlRotation = true;
+	// Roll 전용 Pivot
+	CameraRollRoot =
+		CreateDefaultSubobject<USceneComponent>(TEXT("CameraRollRoot"));
 
-	// Create a follow camera
-	FollowCamera = CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
-	FollowCamera->SetupAttachment(CameraBoom, USpringArmComponent::SocketName); // Attach the camera to the end of the boom and let the boom adjust to match the controller orientation
-	FollowCamera->bUsePawnControlRotation = false; // Camera does not rotate relative to arm
+	CameraRollRoot->SetupAttachment(
+		CameraBoom,
+		USpringArmComponent::SocketName
+	);
+	// Follow Camera
+	FollowCamera =
+		CreateDefaultSubobject<UCameraComponent>(TEXT("FollowCamera"));
 
+	FollowCamera->SetupAttachment(CameraRollRoot);
+	FollowCamera->bUsePawnControlRotation = false;
+	
 	// Note: The skeletal mesh and anim blueprint references on the Mesh component (inherited from Character) 
 	// are set in the derived blueprint asset named ThirdPersonCharacter (to avoid direct content references in C++)
 	//슬라이드 추가
@@ -186,13 +210,19 @@ void ABattleCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 				this,
 				&ABattleCharacter::EndSlide
 			);
+
+			EnhancedInputComponent->BindAction(
+				TestGravityAction,
+				ETriggerEvent::Started,
+				this,
+				&ABattleCharacter::RotateCameraRight
+				//&ABattleCharacter::TestNextOrientation
+			);
 		}
 		else
 		{
 			UE_LOG(LogTemp, Error, TEXT("SlideAction NULL"));
 		}
-
-
 
 
 		// Looking
@@ -238,6 +268,137 @@ void ABattleCharacter::UpdateRunSpeed(int DifficultyLevel)
 
 	GetCharacterMovement()->MaxWalkSpeed =
 		FMath::Min(NewSpeed, MaxRunSpeed);
+}
+
+void ABattleCharacter::SetTunnelOrientation(ETunnelOrientation NewOrientation)
+{
+	CurrentTunnelOrientation = NewOrientation;
+
+	FVector NewGravityDirection;
+
+	switch (CurrentTunnelOrientation)
+	{
+	case ETunnelOrientation::Floor:
+		NewGravityDirection = FVector(0.f, 0.f, -1.f);
+		break;
+
+	case ETunnelOrientation::RightWall:
+		NewGravityDirection = FVector(0.f, 1.f, 0.f);
+		break;
+
+	case ETunnelOrientation::Ceiling:
+		NewGravityDirection = FVector(0.f, 0.f, 1.f);
+		break;
+
+	case ETunnelOrientation::LeftWall:
+		NewGravityDirection = FVector(0.f, -1.f, 0.f);
+		break;
+
+	default:
+		NewGravityDirection = FVector(0.f, 0.f, -1.f);
+		break;
+	}
+
+	GetCharacterMovement()->SetGravityDirection(NewGravityDirection);
+}
+
+void ABattleCharacter::RotateTunnelOrientationRight()
+{
+	switch (CurrentTunnelOrientation)
+	{
+	case ETunnelOrientation::Floor:
+		SetTunnelOrientation(ETunnelOrientation::RightWall);
+		break;
+
+	case ETunnelOrientation::RightWall:
+		SetTunnelOrientation(ETunnelOrientation::Ceiling);
+		break;
+
+	case ETunnelOrientation::Ceiling:
+		SetTunnelOrientation(ETunnelOrientation::LeftWall);
+		break;
+
+	case ETunnelOrientation::LeftWall:
+		SetTunnelOrientation(ETunnelOrientation::Floor);
+		break;
+	}
+}
+
+void ABattleCharacter::RotateTunnelOrientationLeft()
+{
+	switch (CurrentTunnelOrientation)
+	{
+	case ETunnelOrientation::Floor:
+		SetTunnelOrientation(ETunnelOrientation::LeftWall);
+		break;
+
+	case ETunnelOrientation::LeftWall:
+		SetTunnelOrientation(ETunnelOrientation::Ceiling);
+		break;
+
+	case ETunnelOrientation::Ceiling:
+		SetTunnelOrientation(ETunnelOrientation::RightWall);
+		break;
+
+	case ETunnelOrientation::RightWall:
+		SetTunnelOrientation(ETunnelOrientation::Floor);
+		break;
+	}
+}
+
+void ABattleCharacter::TestRightGravity()
+{
+	SetTunnelOrientation(ETunnelOrientation::RightWall);
+
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("TestRightGravity called")
+	);
+}
+
+void ABattleCharacter::TestRightOrientation()
+{
+	switch (CurrentTunnelOrientation)
+	{
+	case ETunnelOrientation::Floor:
+		SetTunnelOrientation(ETunnelOrientation::RightWall);
+		break;
+
+	case ETunnelOrientation::RightWall:
+		SetTunnelOrientation(ETunnelOrientation::Ceiling);
+		break;
+
+	case ETunnelOrientation::Ceiling:
+		SetTunnelOrientation(ETunnelOrientation::LeftWall);
+		break;
+
+	case ETunnelOrientation::LeftWall:
+		SetTunnelOrientation(ETunnelOrientation::Floor);
+		break;
+	}
+}
+
+void ABattleCharacter::TestLeftOrientation()
+{
+	switch (CurrentTunnelOrientation)
+	{
+	case ETunnelOrientation::Floor:
+		SetTunnelOrientation(ETunnelOrientation::RightWall);
+		break;
+
+	case ETunnelOrientation::LeftWall:
+		SetTunnelOrientation(ETunnelOrientation::Ceiling);
+		break;
+
+	case ETunnelOrientation::Ceiling:
+		SetTunnelOrientation(ETunnelOrientation::LeftWall);
+		break;
+
+	case ETunnelOrientation::RightWall:
+		SetTunnelOrientation(ETunnelOrientation::Floor);
+		break;
+	}
 }
 
 //void ABattleCharacter::TriggerChaser()
@@ -331,6 +492,97 @@ void ABattleCharacter::DieAndRestart()
 	GetWorldTimerManager().SetTimer(UnusedHandle, this,
 		&ABattleCharacter::RestartLevel, 2.f, false);
 
+}
+
+void ABattleCharacter::RotateCameraRight()
+{
+	if (bCameraRotating || !CameraRollRoot)
+	{
+		return;
+	}
+
+	const FRotator CurrentRotation =
+		CameraRollRoot->GetRelativeRotation();
+
+	CameraRollStart = CurrentRotation.Roll;
+	CameraRollTarget = CameraRollStart - 90.0f;
+
+	CameraRollElapsed = 0.0f;
+	bCameraRotating = true;
+}
+
+void ABattleCharacter::RotateCameraLeft()
+{
+	if (bCameraRotating || !CameraRollRoot)
+	{
+		return;
+	}
+
+	const FRotator CurrentRotation =
+		CameraRollRoot->GetRelativeRotation();
+
+	CameraRollStart = CurrentRotation.Roll;
+	CameraRollTarget = CameraRollStart + 90.0f;
+
+	CameraRollElapsed = 0.0f;
+	bCameraRotating = true;
+}
+
+void ABattleCharacter::UpdateCameraRoll(float DeltaTime)
+{
+	if (!bCameraRotating || !CameraRollRoot)
+	{
+		return;
+	}
+
+	CameraRollElapsed += DeltaTime;
+
+	const float Alpha =
+		FMath::Clamp(
+			CameraRollElapsed / CameraRollDuration,
+			0.0f,
+			1.0f
+		);
+
+	const float SmoothAlpha =
+		FMath::InterpEaseInOut(
+			0.0f,
+			1.0f,
+			Alpha,
+			2.0f
+		);
+
+	const float NewRoll =
+		FMath::Lerp(
+			CameraRollStart,
+			CameraRollTarget,
+			SmoothAlpha
+		);
+
+	FRotator NewRotation =
+		CameraRollRoot->GetRelativeRotation();
+
+	NewRotation.Roll = NewRoll;
+
+	CameraRollRoot->SetRelativeRotation(NewRotation);
+
+	if (Alpha >= 1.0f)
+	{
+		NewRotation.Roll = CameraRollTarget;
+		CameraRollRoot->SetRelativeRotation(NewRotation);
+
+		bCameraRotating = false;
+
+		if (bOnWall)
+		{
+			RequestWallOff();
+		}
+	}
+}
+
+void ABattleCharacter::RestoreTunnelGravity()
+{
+	SetTunnelOrientation(CurrentTunnelOrientation);
 }
 
 void ABattleCharacter::Move(const FInputActionValue& Value)
@@ -539,11 +791,23 @@ void ABattleCharacter::UpdateRunnerMovement(float DeltaTime)
 	}
 	else
 	{
+		//기존 Gravity 방향
+		//const FVector RightDirection =
+		//	FVector::CrossProduct(
+		//		FVector::UpVector,
+		//		BaseRunDirection
+		//	).GetSafeNormal();
+
+		//Graviy 기준을 수정한 벽(바닥) 방향으로 변경
+		const FVector CurrentUp =
+			-MoveComp->GetGravityDirection();
+
 		const FVector RightDirection =
 			FVector::CrossProduct(
-				FVector::UpVector,
+				CurrentUp,
 				BaseRunDirection
 			).GetSafeNormal();
+
 
 		if (MoveComp->IsFalling())
 		{
@@ -570,21 +834,21 @@ void ABattleCharacter::UpdateRunnerMovement(float DeltaTime)
 	}
 
 	// 이건 지금처럼 벽에서는 하지 않음
-	if (!bOnWall)
-	{
-		const FRotator TargetRotation =
-			BaseRunDirection.Rotation();
+	//if (!bOnWall)
+	//{
+	//	const FRotator TargetRotation =
+	//		BaseRunDirection.Rotation();
 
-		const FRotator NewRotation =
-			FMath::RInterpTo(
-				GetActorRotation(),
-				TargetRotation,
-				DeltaTime,
-				10.0f
-			);
+	//	const FRotator NewRotation =
+	//		FMath::RInterpTo(
+	//			GetActorRotation(),
+	//			TargetRotation,
+	//			DeltaTime,
+	//			10.0f
+	//		);
 
-		SetActorRotation(NewRotation);
-	}
+	//	SetActorRotation(NewRotation);
+	//}
 }
 void ABattleCharacter::Look(const FInputActionValue& Value)
 {
@@ -672,6 +936,31 @@ void ABattleCharacter::Tick(float DeltaTime) {
 	//	UpdateChaserPosition();
 	//}
 
+	UpdateCameraRoll(DeltaTime);
+
+	const UCharacterMovementComponent* Movement = GetCharacterMovement();
+
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("Mode=%d Gravity=%s Velocity=%s Location=%s"),
+		static_cast<int32>(Movement->MovementMode),
+		*Movement->GetGravityDirection().ToString(),
+		*Movement->Velocity.ToString(),
+		*GetActorLocation().ToString()
+	);
+
+	if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	{
+		UE_LOG(
+			LogTemp,
+			Warning,
+			TEXT("Control=%s | BoomTarget=%s | CameraWorld=%s"),
+			*PC->GetControlRotation().ToString(),
+			*CameraBoom->GetTargetRotation().ToString(),
+			*FollowCamera->GetComponentRotation().ToString()
+		);
+	}
 	
 
 
