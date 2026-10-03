@@ -73,7 +73,7 @@ private:
 	FVector RunDirection;
 	FVector BaseRunDirection;
 	FVector CurrentRunDirection;
-	float LateralInput;
+
 
 
 
@@ -87,6 +87,9 @@ public:
 
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	bool bIsSliding = false;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Movement")
+	float LateralInput;
 
 
 	float DefaultCapsuleHalfHeight;
