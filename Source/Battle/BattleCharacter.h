@@ -103,6 +103,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Runner")
 	void SetMapRotating(bool bRotating);
 
+
+	bool bSurfaceChanging = false;
+
+	FTimerHandle SurfaceChangeTimer;
+
 	
 	// 속도 관련
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Speed")
@@ -123,6 +128,7 @@ public:
 	FVector CurrentWallNormal = FVector::ZeroVector;
 
 
+
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tunnel")
 	ETunnelOrientation CurrentTunnelOrientation = ETunnelOrientation::Floor;
 
@@ -135,6 +141,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void RotateTunnelOrientationLeft();
+
+	UFUNCTION(BlueprintCallable)
+	void UnlockSurfaceChange();
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	class UInputAction* TestGravityAction;
@@ -147,6 +156,12 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void TestLeftOrientation();
+
+	UFUNCTION(BlueprintCallable)
+	void TrySetSurfaceFromHit(const FHitResult& Hit);
+
+	UFUNCTION(BlueprintCallable)
+	void SetSurfaceNormal(const FVector& SurfaceNormal);
 	//////////////////////////////////////////////////////////
 	//추격자 클래스
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Runner|Chaser")

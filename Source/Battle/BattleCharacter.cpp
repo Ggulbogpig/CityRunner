@@ -43,7 +43,7 @@ ABattleCharacter::ABattleCharacter()
 	GetCharacterMovement()->BrakingDecelerationWalking = 2000.f;
 	GetCharacterMovement()->BrakingDecelerationFalling = 1500.0f;
 
-	JumpMaxCount = 2;
+	JumpMaxCount = 1;
 
 	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
 
@@ -300,6 +300,14 @@ void ABattleCharacter::SetTunnelOrientation(ETunnelOrientation NewOrientation)
 	}
 
 	GetCharacterMovement()->SetGravityDirection(NewGravityDirection);
+
+
+
+	//UE_LOG(LogTemp, Warning,
+	//	TEXT("SetTunnelOrientation / Falling=%d / Gravity=%s / Velocity=%s"),
+	//	GetCharacterMovement()->IsFalling(),
+	//	*GetCharacterMovement()->GetGravityDirection().ToString(),
+	//	*GetCharacterMovement()->Velocity.ToString());
 }
 
 void ABattleCharacter::RotateTunnelOrientationRight()
@@ -344,6 +352,11 @@ void ABattleCharacter::RotateTunnelOrientationLeft()
 		SetTunnelOrientation(ETunnelOrientation::Floor);
 		break;
 	}
+}
+
+void ABattleCharacter::UnlockSurfaceChange()
+{
+	bSurfaceChanging = false;
 }
 
 void ABattleCharacter::TestRightGravity()
@@ -399,6 +412,124 @@ void ABattleCharacter::TestLeftOrientation()
 		SetTunnelOrientation(ETunnelOrientation::Floor);
 		break;
 	}
+}
+
+void ABattleCharacter::TrySetSurfaceFromHit(const FHitResult& Hit)
+{
+
+	if (bSurfaceChanging)
+	{
+		return;
+	}
+
+	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
+	if (!MoveComp)
+	{
+		return;
+	}
+
+	const FVector HitNormal =
+		Hit.ImpactNormal.GetSafeNormal();
+
+	const FVector CurrentUp =
+		-MoveComp->GetGravityDirection().GetSafeNormal();
+
+	// 지금 밟고 있는 면이면 무시
+	const float UpDot =
+		FVector::DotProduct(CurrentUp, HitNormal);
+
+	if (UpDot > 0.9f)
+	{
+		return;
+	}
+
+	const FVector CurrentRight =
+		FVector::CrossProduct(
+			CurrentUp,
+			BaseRunDirection
+		).GetSafeNormal();
+
+	const float SideDot =
+		FVector::DotProduct(
+			HitNormal,
+			CurrentRight
+		);
+
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("SURFACE HIT | Normal=%s UpDot=%.2f SideDot=%.2f"),
+		*HitNormal.ToString(),
+		UpDot,
+		SideDot
+	);
+
+	// 오른쪽 인접 면
+	if (SideDot > 0.7f)
+	{
+		bSurfaceChanging = true;
+
+		RotateCameraLeft();
+		SetSurfaceNormal(HitNormal);
+
+		GetWorldTimerManager().SetTimer(
+			SurfaceChangeTimer,
+			this,
+			&ABattleCharacter::UnlockSurfaceChange,
+			0.5f,
+			false
+		);
+	}
+
+	// 왼쪽 인접 면
+	else if (SideDot < -0.7f)
+	{
+		bSurfaceChanging = true;
+
+		RotateCameraRight();
+		SetSurfaceNormal(HitNormal);
+
+		GetWorldTimerManager().SetTimer(
+			SurfaceChangeTimer,
+			this,
+			&ABattleCharacter::UnlockSurfaceChange,
+			0.5f,
+			false
+		);
+	}
+}
+
+void ABattleCharacter::SetSurfaceNormal(const FVector& SurfaceNormal)
+{
+	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
+	if (!MoveComp)
+	{
+		return;
+	}
+
+	const FVector NewUp =
+		SurfaceNormal.GetSafeNormal();
+
+	const FVector NewGravity =
+		-NewUp;
+
+	MoveComp->SetGravityDirection(NewGravity);
+
+	// 새 바닥에서 약간 떨어뜨림
+	const float SurfaceOffset = 15.0f;
+
+	AddActorWorldOffset(
+		NewUp * SurfaceOffset,
+		true
+	);
+
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("GRAVITY CHANGED | NewUp=%s NewGravity=%s"),
+		*NewUp.ToString(),
+		*NewGravity.ToString()
+	);
 }
 
 //void ABattleCharacter::TriggerChaser()
@@ -572,6 +703,7 @@ void ABattleCharacter::UpdateCameraRoll(float DeltaTime)
 		CameraRollRoot->SetRelativeRotation(NewRotation);
 
 		bCameraRotating = false;
+		bSurfaceChanging = false;
 
 		if (bOnWall)
 		{
