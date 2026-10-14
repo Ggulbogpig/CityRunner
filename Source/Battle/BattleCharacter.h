@@ -162,6 +162,9 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SetSurfaceNormal(const FVector& SurfaceNormal);
+
+	UFUNCTION(BlueprintCallable)
+	void UpdateSurfaceFromFloor();
 	
 
 	UFUNCTION(BlueprintCallable)

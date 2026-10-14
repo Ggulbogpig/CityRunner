@@ -54,9 +54,9 @@ void ASpawnLevel::SpawnLevel(bool IsFirst)
 		ABaseLevel* LastLevel = LevelList.Last();
 		SpawnLocation = LastLevel->GetSpawnLocation()->GetComponentTransform().GetTranslation();
 
-		UE_LOG(LogTemp, Warning,
-			TEXT("NextSpawn = %s"),
-			*SpawnLocation.ToString());
+		//UE_LOG(LogTemp, Warning,
+		//	TEXT("NextSpawn = %s"),
+		//	*SpawnLocation.ToString());
 	}
 	
 	//레벨 난이도 선정
@@ -160,9 +160,9 @@ void ASpawnLevel::SpawnLevel(bool IsFirst)
 
 	if (NewLevel) {
 
-		UE_LOG(LogTemp, Warning,
-			TEXT("Spawned Location = %s"),
-			*NewLevel->GetActorLocation().ToString());
+		//UE_LOG(LogTemp, Warning,
+		//	TEXT("Spawned Location = %s"),
+		//	*NewLevel->GetActorLocation().ToString());
 
 		OnLevelSpawned(NewLevel);
 
@@ -177,9 +177,9 @@ void ASpawnLevel::SpawnLevel(bool IsFirst)
 
 		if (IsValid(OldLevel))
 		{
-			UE_LOG(LogTemp, Warning,
-				TEXT("DESTROY LEVEL: %s"),
-				*GetNameSafe(LevelList[0]));
+			//UE_LOG(LogTemp, Warning,
+			//	TEXT("DESTROY LEVEL: %s"),
+			//	*GetNameSafe(LevelList[0]));
 			OldLevel->Destroy();
 		}
 		LevelList.RemoveAt(0);
@@ -214,11 +214,11 @@ void ASpawnLevel::OnOverlapBegin(
 {
 	if (Cast<ABattleCharacter>(OtherActor))
 	{
-		UE_LOG(LogTemp, Warning,
-			TEXT("TRIGGER OWNER=%s / OtherComp=%s / LevelCount=%d"),
-			*GetNameSafe(OverlappedComp ? OverlappedComp->GetOwner() : nullptr),
-			*GetNameSafe(OtherComp),
-			LevelList.Num());
+		//UE_LOG(LogTemp, Warning,
+		//	TEXT("TRIGGER OWNER=%s / OtherComp=%s / LevelCount=%d"),
+		//	*GetNameSafe(OverlappedComp ? OverlappedComp->GetOwner() : nullptr),
+		//	*GetNameSafe(OtherComp),
+		//	LevelList.Num());
 
 		// 이 Trigger는 한 번만 사용
 		if (OverlappedComp)

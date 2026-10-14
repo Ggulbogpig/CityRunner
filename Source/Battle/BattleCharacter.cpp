@@ -502,14 +502,28 @@ void ABattleCharacter::TrySetSurfaceFromHit(const FHitResult& Hit)
 			FMath::Acos(Dot)
 		);
 
-	UE_LOG(
-		LogTemp,
-		Warning,
-		TEXT("SURFACE HIT | Normal=%s CurrentUp=%s Angle=%.2f"),
-		*HitNormal.ToString(),
-		*CurrentUp.ToString(),
-		Angle
-	);
+	const FVector Forward =
+		BaseRunDirection.GetSafeNormal();
+
+	const float ForwardDot =
+		FMath::Abs(
+			FVector::DotProduct(HitNormal, Forward)
+		);
+
+	// 터널 진행 방향 또는 반대 방향을 향하는 면은 무시
+	if (ForwardDot > 0.7f)
+	{
+		return;
+	}
+
+	//UE_LOG(
+	//	LogTemp,
+	//	Warning,
+	//	TEXT("SURFACE HIT | Normal=%s CurrentUp=%s Angle=%.2f"),
+	//	*HitNormal.ToString(),
+	//	*CurrentUp.ToString(),
+	//	Angle
+	//);
 
 	// 거의 같은 면이면 무시
 	if (Angle < 10.0f)
@@ -768,6 +782,61 @@ void ABattleCharacter::RotateCameraByAngle(float Angle)
 //	}
 //}
 
+void ABattleCharacter::UpdateSurfaceFromFloor()
+{
+	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
+
+	if (!MoveComp || bSurfaceChanging)
+	{
+		return;
+	}
+
+	if (!MoveComp->IsMovingOnGround())
+	{
+		return;
+	}
+
+	if (!MoveComp->CurrentFloor.IsWalkableFloor())
+	{
+		return;
+	}
+
+	const FHitResult& FloorHit =
+		MoveComp->CurrentFloor.HitResult;
+
+	const FVector FloorNormal =
+		FloorHit.ImpactNormal.GetSafeNormal();
+
+	const FVector CurrentUp =
+		-MoveComp->GetGravityDirection().GetSafeNormal();
+
+	const float Dot =
+		FMath::Clamp(
+			FVector::DotProduct(CurrentUp, FloorNormal),
+			-1.0f,
+			1.0f
+		);
+
+	const float Angle =
+		FMath::RadiansToDegrees(
+			FMath::Acos(Dot)
+		);
+
+	// 거의 같은 바닥은 무시
+	if (Angle < 5.0f)
+	{
+		return;
+	}
+
+	// 완만한 면 전환만 Floor가 담당
+	if (Angle > 60.0f)
+	{
+		return;
+	}
+
+	ApplySurfaceChange(FloorNormal);
+}
+
 void ABattleCharacter::SetSurfaceNormal(const FVector& SurfaceNormal)
 {
 	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
@@ -785,7 +854,7 @@ void ABattleCharacter::SetSurfaceNormal(const FVector& SurfaceNormal)
 	MoveComp->SetGravityDirection(NewGravity);
 
 	// 새 바닥에서 약간 떨어뜨림
-	const float SurfaceOffset = 15.0f;
+	const float SurfaceOffset = 30.0f;
 
 	AddActorWorldOffset(
 		NewUp * SurfaceOffset,
@@ -890,7 +959,7 @@ void ABattleCharacter::DieAndRestart()
 	//CanMove = false;
 	FTimerHandle UnusedHandle;
 	GetWorldTimerManager().SetTimer(UnusedHandle, this,
-		&ABattleCharacter::RestartLevel, 2.f, false);
+		&ABattleCharacter::RestartLevel, 0.5f, false);
 
 }
 
@@ -1272,13 +1341,13 @@ void ABattleCharacter::OnOverlapBegin(UPrimitiveComponent* OverlappedComp,
 	int32 OtherBodyIndex, bool bFromSweep, const FHitResult& SweepResult) {
 
 	if (OtherActor != nullptr) {
-		UE_LOG(
-			LogTemp,
-			Warning,
-			TEXT("Overlap 발생! OtherActor: %s, OtherComp: %s"),
-			*GetNameSafe(OtherActor),
-			*GetNameSafe(OtherComp)
-		);
+		//UE_LOG(
+		//	LogTemp,
+		//	Warning,
+		//	TEXT("Overlap 발생! OtherActor: %s, OtherComp: %s"),
+		//	*GetNameSafe(OtherActor),
+		//	*GetNameSafe(OtherComp)
+		//);
 		ASpikes* WallSpike = Cast<AWallSpike>(OtherActor);
 		ASpikes* Spike = Cast<ASpikes>(OtherActor);
 		// BP_Level의 낙사 판정 Box인지 확인
@@ -1329,7 +1398,7 @@ void ABattleCharacter::Tick(float DeltaTime) {
 		return;
 	}
 	//매 초 밟고 있는 바닥 갱신
-	//UpdateSurfaceFromFloor();
+	UpdateSurfaceFromFloor();
 
 
 
@@ -1344,27 +1413,27 @@ void ABattleCharacter::Tick(float DeltaTime) {
 
 	const UCharacterMovementComponent* Movement = GetCharacterMovement();
 
-	UE_LOG(
-		LogTemp,
-		Warning,
-		TEXT("Mode=%d Gravity=%s Velocity=%s Location=%s"),
-		static_cast<int32>(Movement->MovementMode),
-		*Movement->GetGravityDirection().ToString(),
-		*Movement->Velocity.ToString(),
-		*GetActorLocation().ToString()
-	);
+	//UE_LOG(
+	//	LogTemp,
+	//	Warning,
+	//	TEXT("Mode=%d Gravity=%s Velocity=%s Location=%s"),
+	//	static_cast<int32>(Movement->MovementMode),
+	//	*Movement->GetGravityDirection().ToString(),
+	//	*Movement->Velocity.ToString(),
+	//	*GetActorLocation().ToString()
+	//);
 
-	if (APlayerController* PC = Cast<APlayerController>(GetController()))
-	{
-		UE_LOG(
-			LogTemp,
-			Warning,
-			TEXT("Control=%s | BoomTarget=%s | CameraWorld=%s"),
-			*PC->GetControlRotation().ToString(),
-			*CameraBoom->GetTargetRotation().ToString(),
-			*FollowCamera->GetComponentRotation().ToString()
-		);
-	}
+	//if (APlayerController* PC = Cast<APlayerController>(GetController()))
+	//{
+	//	UE_LOG(
+	//		LogTemp,
+	//		Warning,
+	//		TEXT("Control=%s | BoomTarget=%s | CameraWorld=%s"),
+	//		*PC->GetControlRotation().ToString(),
+	//		*CameraBoom->GetTargetRotation().ToString(),
+	//		*FollowCamera->GetComponentRotation().ToString()
+	//	);
+	//}
 	
 
 

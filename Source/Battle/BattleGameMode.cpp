@@ -52,7 +52,7 @@ void ABattleGameMode::IncrementScoreOverTime()
 	CurrentScore += ScoreTickAmount;
 
 	// 로그 출력 (디버깅용)
-	UE_LOG(LogTemp, Warning, TEXT("Running Score: %d"), CurrentScore);
+	//UE_LOG(LogTemp, Warning, TEXT("Running Score: %d"), CurrentScore);
 
 	const int NewDifficultyLevel = CurrentScore / 50;
 
