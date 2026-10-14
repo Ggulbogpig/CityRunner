@@ -162,6 +162,10 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void SetSurfaceNormal(const FVector& SurfaceNormal);
+	
+
+	UFUNCTION(BlueprintCallable)
+	void ApplySurfaceChange(const FVector& NewNormal);
 	//////////////////////////////////////////////////////////
 	//추격자 클래스
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Runner|Chaser")
@@ -218,6 +222,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Camera")
 	void RotateCameraLeft();
 
+	UFUNCTION(BlueprintCallable, Category="Camera")
+	void RotateCameraByAngle(float Angle);
+
 	void UpdateCameraRoll(float DeltaTime);
 
 	UFUNCTION(BlueprintCallable, Category = "Tunnel")
@@ -235,7 +242,7 @@ private:
 	float CameraRollElapsed = 0.0f;
 
 	UPROPERTY(EditAnywhere, Category = "Camera")
-	float CameraRollDuration = 0.8f;
+	float CameraRollDuration = 0.5f;
 
 
 	

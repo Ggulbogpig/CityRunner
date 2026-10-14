@@ -56,6 +56,16 @@ void ABattleGameMode::IncrementScoreOverTime()
 
 	const int NewDifficultyLevel = CurrentScore / 50;
 
+	// 맵 레벨 전환
+	if (CurrentScore >= 30 && MapLevel == 1)
+	{
+		MapLevel = 2;
+
+		UE_LOG(LogTemp, Warning,
+			TEXT("MAP LEVEL UP -> LV2")
+		);
+	}
+
 	// 아직 같은 50점 구간이면 아무것도 안 함
 	if (NewDifficultyLevel == DifficultyLevel)
 	{

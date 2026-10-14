@@ -414,9 +414,9 @@ void ABattleCharacter::TestLeftOrientation()
 	}
 }
 
-void ABattleCharacter::TrySetSurfaceFromHit(const FHitResult& Hit)
+//두 함수 통합, 중복 처리 방지
+void ABattleCharacter::ApplySurfaceChange(const FVector& NewNormal)
 {
-
 	if (bSurfaceChanging)
 	{
 		return;
@@ -428,76 +428,345 @@ void ABattleCharacter::TrySetSurfaceFromHit(const FHitResult& Hit)
 		return;
 	}
 
+	const FVector CurrentUp =
+		-MoveComp->GetGravityDirection().GetSafeNormal();
+
+	const FVector NewUp =
+		NewNormal.GetSafeNormal();
+
+	const float Dot =
+		FVector::DotProduct(CurrentUp, NewUp);
+
+	// 거의 같은 면이면 무시
+	if (Dot > 0.995f)
+	{
+		return;
+	}
+
+	const FVector Forward =
+		BaseRunDirection.GetSafeNormal();
+
+	const FVector Cross =
+		FVector::CrossProduct(CurrentUp, NewUp);
+
+	const float SinAngle =
+		FVector::DotProduct(Forward, Cross);
+
+	const float CosAngle =
+		FVector::DotProduct(CurrentUp, NewUp);
+
+	const float SignedAngle =
+		FMath::RadiansToDegrees(
+			FMath::Atan2(SinAngle, CosAngle)
+		);
+
+	if (FMath::Abs(SignedAngle) < 2.0f)
+	{
+		return;
+	}
+
+	bSurfaceChanging = true;
+
+	RotateCameraByAngle(SignedAngle);
+	SetSurfaceNormal(NewUp);
+}
+
+void ABattleCharacter::TrySetSurfaceFromHit(const FHitResult& Hit)
+{
+	UCharacterMovementComponent* MoveComp =
+		GetCharacterMovement();
+
+	if (!MoveComp || bSurfaceChanging)
+	{
+		return;
+	}
+
 	const FVector HitNormal =
 		Hit.ImpactNormal.GetSafeNormal();
 
 	const FVector CurrentUp =
 		-MoveComp->GetGravityDirection().GetSafeNormal();
 
-	// 지금 밟고 있는 면이면 무시
-	const float UpDot =
-		FVector::DotProduct(CurrentUp, HitNormal);
+	const float Dot =
+		FMath::Clamp(
+			FVector::DotProduct(
+				CurrentUp,
+				HitNormal
+			),
+			-1.0f,
+			1.0f
+		);
 
-	if (UpDot > 0.9f)
-	{
-		return;
-	}
-
-	const FVector CurrentRight =
-		FVector::CrossProduct(
-			CurrentUp,
-			BaseRunDirection
-		).GetSafeNormal();
-
-	const float SideDot =
-		FVector::DotProduct(
-			HitNormal,
-			CurrentRight
+	const float Angle =
+		FMath::RadiansToDegrees(
+			FMath::Acos(Dot)
 		);
 
 	UE_LOG(
 		LogTemp,
 		Warning,
-		TEXT("SURFACE HIT | Normal=%s UpDot=%.2f SideDot=%.2f"),
+		TEXT("SURFACE HIT | Normal=%s CurrentUp=%s Angle=%.2f"),
 		*HitNormal.ToString(),
-		UpDot,
-		SideDot
+		*CurrentUp.ToString(),
+		Angle
 	);
 
-	// 오른쪽 인접 면
-	if (SideDot > 0.7f)
+	// 거의 같은 면이면 무시
+	if (Angle < 10.0f)
 	{
-		bSurfaceChanging = true;
-
-		RotateCameraLeft();
-		SetSurfaceNormal(HitNormal);
-
-		GetWorldTimerManager().SetTimer(
-			SurfaceChangeTimer,
-			this,
-			&ABattleCharacter::UnlockSurfaceChange,
-			0.5f,
-			false
-		);
+		return;
 	}
 
-	// 왼쪽 인접 면
-	else if (SideDot < -0.7f)
+	// 일단 테스트 단계에서는 100도 이하까지 허용
+	if (Angle > 100.0f)
 	{
-		bSurfaceChanging = true;
-
-		RotateCameraRight();
-		SetSurfaceNormal(HitNormal);
-
-		GetWorldTimerManager().SetTimer(
-			SurfaceChangeTimer,
-			this,
-			&ABattleCharacter::UnlockSurfaceChange,
-			0.5f,
-			false
-		);
+		return;
 	}
+
+	ApplySurfaceChange(HitNormal);
 }
+
+
+void ABattleCharacter::RotateCameraByAngle(float Angle)
+{
+	if (bCameraRotating || !CameraRollRoot)
+	{
+		return;
+	}
+
+	const FRotator CurrentRotation =
+		CameraRollRoot->GetRelativeRotation();
+
+	CameraRollStart = CurrentRotation.Roll;
+
+	// 부호는 실제 테스트 후 반대로 해야 할 수도 있음
+	CameraRollTarget = CameraRollStart - Angle;
+
+	CameraRollElapsed = 0.0f;
+	bCameraRotating = true;
+}
+
+//사각형태말고 확장형 맵에 적합한 맵 회전 함수 2
+//void ABattleCharacter::TrySetSurfaceFromHit(const FHitResult& Hit)
+//{
+//	if (bSurfaceChanging)
+//	{
+//		return;
+//	}
+//
+//	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
+//	if (!MoveComp)
+//	{
+//		return;
+//	}
+//
+//	const FVector HitNormal =
+//		Hit.ImpactNormal.GetSafeNormal();
+//
+//	const FVector CurrentUp =
+//		-MoveComp->GetGravityDirection().GetSafeNormal();
+//
+//	const FVector Forward =
+//		BaseRunDirection.GetSafeNormal();
+//
+//
+//	// 1. 현재 밟고 있는 면이면 무시
+//	const float UpDot =
+//		FVector::DotProduct(CurrentUp, HitNormal);
+//
+//	if (UpDot > 0.98f)
+//	{
+//		return;
+//	}
+//
+//
+//	// 2. 터널 진행 방향을 바라보는 면이면 무시
+//	// 타일 앞/뒤 면, 경계면 등을 막기 위함
+//	const float ForwardDot =
+//		FMath::Abs(
+//			FVector::DotProduct(HitNormal, Forward)
+//		);
+//
+//	if (ForwardDot > 0.3f)
+//	{
+//		UE_LOG(LogTemp, Warning,
+//			TEXT("IGNORE FRONT/BACK | ForwardDot=%.2f"),
+//			ForwardDot);
+//
+//		return;
+//	}
+//
+//
+//	// 3. 정말 그 면을 향해 이동하고 있었는지 확인
+//	const FVector VelocityDir =
+//		MoveComp->Velocity.GetSafeNormal();
+//
+//	//const float ApproachDot =
+//	//	FVector::DotProduct(
+//	//		VelocityDir,
+//	//		HitNormal
+//	//	);
+//
+//	// HitNormal 반대 방향으로 들어가고 있어야 실제 충돌
+//	// 0에 가깝다면 그냥 스치거나 바닥 경계에 접촉한 것
+//	//if (ApproachDot > -0.1f)
+//	//{
+//	//	UE_LOG(LogTemp, Warning,
+//	//		TEXT("IGNORE GLANCING HIT | ApproachDot=%.2f"),
+//	//		ApproachDot);
+//
+//	//	return;
+//	//}
+//
+//
+//	// 4. 현재 바닥 → 새 바닥의 실제 각도 계산
+//	const FVector Cross =
+//		FVector::CrossProduct(
+//			CurrentUp,
+//			HitNormal
+//		);
+//
+//	const float SinAngle =
+//		FVector::DotProduct(
+//			Forward,
+//			Cross
+//		);
+//
+//	const float CosAngle =
+//		FVector::DotProduct(
+//			CurrentUp,
+//			HitNormal
+//		);
+//
+//	const float SignedAngle =
+//		FMath::RadiansToDegrees(
+//			FMath::Atan2(
+//				SinAngle,
+//				CosAngle
+//			)
+//		);
+//
+//
+//	// 너무 미세한 Normal 변화는 무시
+//	if (FMath::Abs(SignedAngle) < 5.0f)
+//	{
+//		return;
+//	}
+//
+//
+//	//UE_LOG(
+//	//	LogTemp,
+//	//	Warning,
+//	//	TEXT(
+//	//		"SURFACE ACCEPT | Normal=%s UpDot=%.2f ForwardDot=%.2f Approach=%.2f Angle=%.2f"
+//	//	),
+//	//	*HitNormal.ToString(),
+//	//	UpDot,
+//	//	ForwardDot,
+//	//	ApproachDot,
+//	//	SignedAngle
+//	//);
+//
+//
+//	bSurfaceChanging = true;
+//
+//	RotateCameraByAngle(SignedAngle);
+//	SetSurfaceNormal(HitNormal);
+//
+//	GetWorldTimerManager().SetTimer(
+//		SurfaceChangeTimer,
+//		this,
+//		&ABattleCharacter::UnlockSurfaceChange,
+//		0.5f,
+//		false
+//	);
+//}
+
+////기존 SideDot으로 왼, 오 벽 접지 및 회전 여부 판단해서 맵 회전하는 함수1 
+//void ABattleCharacter::TrySetSurfaceFromHit(const FHitResult& Hit)
+//{
+//
+//	if (bSurfaceChanging)
+//	{
+//		return;
+//	}
+//
+//	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
+//	if (!MoveComp)
+//	{
+//		return;
+//	}
+//
+//	const FVector HitNormal =
+//		Hit.ImpactNormal.GetSafeNormal();
+//
+//	const FVector CurrentUp =
+//		-MoveComp->GetGravityDirection().GetSafeNormal();
+//
+//	// 지금 밟고 있는 면이면 무시
+//	const float UpDot =
+//		FVector::DotProduct(CurrentUp, HitNormal);
+//
+//	if (UpDot > 0.9f)
+//	{
+//		return;
+//	}
+//
+//	const FVector CurrentRight =
+//		FVector::CrossProduct(
+//			CurrentUp,
+//			BaseRunDirection
+//		).GetSafeNormal();
+//
+//	const float SideDot =
+//		FVector::DotProduct(
+//			HitNormal,
+//			CurrentRight
+//		);
+//
+//	UE_LOG(
+//		LogTemp,
+//		Warning,
+//		TEXT("SURFACE HIT | Normal=%s UpDot=%.2f SideDot=%.2f"),
+//		*HitNormal.ToString(),
+//		UpDot,
+//		SideDot
+//	);
+//
+//	// 오른쪽 인접 면
+//	if (SideDot > 0.7f)
+//	{
+//		bSurfaceChanging = true;
+//
+//		RotateCameraLeft();
+//		SetSurfaceNormal(HitNormal);
+//
+//		GetWorldTimerManager().SetTimer(
+//			SurfaceChangeTimer,
+//			this,
+//			&ABattleCharacter::UnlockSurfaceChange,
+//			0.5f,
+//			false
+//		);
+//	}
+//
+//	// 왼쪽 인접 면
+//	else if (SideDot < -0.7f)
+//	{
+//		bSurfaceChanging = true;
+//
+//		RotateCameraRight();
+//		SetSurfaceNormal(HitNormal);
+//
+//		GetWorldTimerManager().SetTimer(
+//			SurfaceChangeTimer,
+//			this,
+//			&ABattleCharacter::UnlockSurfaceChange,
+//			0.5f,
+//			false
+//		);
+//	}
+//}
 
 void ABattleCharacter::SetSurfaceNormal(const FVector& SurfaceNormal)
 {
@@ -1059,6 +1328,9 @@ void ABattleCharacter::Tick(float DeltaTime) {
 	{
 		return;
 	}
+	//매 초 밟고 있는 바닥 갱신
+	//UpdateSurfaceFromFloor();
+
 
 
 	//AddMovementInput(MoveDirection, 1.0f);

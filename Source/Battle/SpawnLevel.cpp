@@ -7,6 +7,7 @@
 #include "Components/BoxComponent.h"
 #include "Kismet/GameplayStatics.h"
 #include "Components/CapsuleComponent.h"
+#include "BattleGameMode.h"
 #include "BattleCharacter.h"
 
 // Sets default values
@@ -58,46 +59,104 @@ void ASpawnLevel::SpawnLevel(bool IsFirst)
 			*SpawnLocation.ToString());
 	}
 	
+	//레벨 난이도 선정
+	ABattleGameMode* GameMode =
+		Cast<ABattleGameMode>(
+			UGameplayStatics::GetGameMode(this)
+		);
+
+	int32 CurrentMapLevel = 1;
+
+	if (GameMode)
+	{
+		CurrentMapLevel = GameMode->MapLevel;
+	}
+
 
 	RandomLevel = FMath::RandRange(1, 9);
 	ABaseLevel* NewLevel = nullptr;
 
-	if (RandomLevel == 1) {
-		NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level1,
-			SpawnLocation, SpawnRotation, SpawnInfo);
+	//난이도 레벨1 
+	if (CurrentMapLevel == 1) {
+		if (RandomLevel == 1) {
+			NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level1,
+				SpawnLocation, SpawnRotation, SpawnInfo);
+		}
+		else if (RandomLevel == 2) {
+			NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level2,
+				SpawnLocation, SpawnRotation, SpawnInfo);
+		}
+		else if (RandomLevel == 3) {
+			NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level3,
+				SpawnLocation, SpawnRotation, SpawnInfo);
+		}
+		else if (RandomLevel == 4) {
+			NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level4,
+				SpawnLocation, SpawnRotation, SpawnInfo);
+		}
+		else if (RandomLevel == 5) {
+			NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level5,
+				SpawnLocation, SpawnRotation, SpawnInfo);
+		}
+		else if (RandomLevel == 6) {
+			NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level6,
+				SpawnLocation, SpawnRotation, SpawnInfo);
+		}
+		else if (RandomLevel == 7) {
+			NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level7,
+				SpawnLocation, SpawnRotation, SpawnInfo);
+		}
+		else if (RandomLevel == 8) {
+			NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level8,
+				SpawnLocation, SpawnRotation, SpawnInfo);
+		}
+		else if (RandomLevel == 9) {
+			NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level9,
+				SpawnLocation, SpawnRotation, SpawnInfo);
+		}
+
 	}
-	else if (RandomLevel == 2) {
-		NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level2,
-			SpawnLocation, SpawnRotation, SpawnInfo);
+
+	//난이도 레벨 2
+	else if (CurrentMapLevel == 2) {
+		if (RandomLevel == 1) {
+			NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level11,
+				SpawnLocation, SpawnRotation, SpawnInfo);
+		}
+		else if (RandomLevel == 2) {
+			NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level12,
+				SpawnLocation, SpawnRotation, SpawnInfo);
+		}
+		else if (RandomLevel == 3) {
+			NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level13,
+				SpawnLocation, SpawnRotation, SpawnInfo);
+		}
+		else if (RandomLevel == 4) {
+			NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level14,
+				SpawnLocation, SpawnRotation, SpawnInfo);
+		}
+		else if (RandomLevel == 5) {
+			NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level15,
+				SpawnLocation, SpawnRotation, SpawnInfo);
+		}
+		else if (RandomLevel == 6) {
+			NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level16,
+				SpawnLocation, SpawnRotation, SpawnInfo);
+		}
+		else if (RandomLevel == 7) {
+			NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level17,
+				SpawnLocation, SpawnRotation, SpawnInfo);
+		}
+		else if (RandomLevel == 8) {
+			NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level18,
+				SpawnLocation, SpawnRotation, SpawnInfo);
+		}
+		else if (RandomLevel == 9) {
+			NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level19,
+				SpawnLocation, SpawnRotation, SpawnInfo);
+		}
 	}
-	else if (RandomLevel == 3) {
-		NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level3,
-			SpawnLocation, SpawnRotation, SpawnInfo);
-	}
-	else if (RandomLevel == 4) {
-		NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level4,
-			SpawnLocation, SpawnRotation, SpawnInfo);
-	}
-	else if (RandomLevel == 5) {
-		NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level5,
-			SpawnLocation, SpawnRotation, SpawnInfo);
-	}
-	else if (RandomLevel == 6) {
-		NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level6,
-			SpawnLocation, SpawnRotation, SpawnInfo);
-	}
-	else if (RandomLevel == 7) {
-		NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level7,
-			SpawnLocation, SpawnRotation, SpawnInfo);
-	}
-	else if (RandomLevel == 8) {
-		NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level8,
-			SpawnLocation, SpawnRotation, SpawnInfo);
-	}
-	else if (RandomLevel == 9) {
-		NewLevel = GetWorld()->SpawnActor<ABaseLevel>(Level9,
-			SpawnLocation, SpawnRotation, SpawnInfo);
-	}
+
 
 	if (NewLevel) {
 

@@ -32,6 +32,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Score")
 	void IncrementCoin();
 
+	UPROPERTY(BlueprintReadOnly, Category = "Level")
+	int32 MapLevel = 1;
+
 	UPROPERTY()
 	TSoftClassPtr<APawn> PlayerPawnClass;
 

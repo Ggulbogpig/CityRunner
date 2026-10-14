@@ -73,6 +73,33 @@ protected:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<ABaseLevel> Level10;
 
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level11;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level12;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level13;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level14;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level15;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level16;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level17;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level18;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level19;
 	TArray<ABaseLevel*> LevelList;
 public:
 	int RandomLevel;
