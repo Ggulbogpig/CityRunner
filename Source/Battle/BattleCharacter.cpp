@@ -140,8 +140,15 @@ void ABattleCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	if (UEnhancedInputComponent* EnhancedInputComponent = Cast<UEnhancedInputComponent>(PlayerInputComponent)) {
 		
 		// Jumping
-		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
+		//EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Started, this, &ACharacter::Jump);
 		EnhancedInputComponent->BindAction(JumpAction, ETriggerEvent::Completed, this, &ACharacter::StopJumping);
+		EnhancedInputComponent->BindAction(
+			JumpAction,
+			ETriggerEvent::Started,
+			this,
+			&ABattleCharacter::HandleJumpInput
+		);
+
 
 		// Moving
 		
@@ -469,6 +476,83 @@ void ABattleCharacter::ApplySurfaceChange(const FVector& NewNormal)
 
 	RotateCameraByAngle(SignedAngle);
 	SetSurfaceNormal(NewUp);
+}
+
+//void ABattleCharacter::Landed(const FHitResult& Hit)
+//{
+//	Super::Landed(Hit);
+//
+//	if (bJumpBuffered)
+//	{
+//		bJumpBuffered = false;
+//
+//		GetWorldTimerManager().ClearTimer(
+//			JumpBufferTimerHandle
+//		);
+//
+//		Jump();
+//	}
+//}
+void ABattleCharacter::Landed(const FHitResult& Hit)
+{
+	Super::Landed(Hit);
+
+	if (bJumpBuffered)
+	{
+		bJumpBuffered = false;
+
+		GetWorldTimerManager().ClearTimer(JumpBufferTimerHandle);
+
+		GetWorldTimerManager().SetTimerForNextTick(
+			this,
+			&ABattleCharacter::Jump
+		);
+	}
+}
+
+//void ABattleCharacter::HandleJumpInput()
+//{
+//	if (CanJump())
+//	{
+//		Jump();
+//		return;
+//	}
+//
+//	// 지금 점프할 수 없으면 입력을 잠시 저장
+//	bJumpBuffered = true;
+//
+//	GetWorldTimerManager().ClearTimer(
+//		JumpBufferTimerHandle
+//	);
+//
+//	GetWorldTimerManager().SetTimer(
+//		JumpBufferTimerHandle,
+//		this,
+//		&ABattleCharacter::ClearJumpBuffer,
+//		JumpBufferDuration,
+//		false
+//	);
+//}
+
+void ABattleCharacter::HandleJumpInput()
+{
+	// 점프 입력 시각 저장
+	LastJumpInputTime = GetWorld()->GetTimeSeconds();
+
+	// 지금 바로 점프 가능하면 즉시 실행
+	if (CanJump())
+	{
+		Jump();
+
+		// 이미 소비했으므로 무효화
+		LastJumpInputTime = -1000.0f;
+	}
+}
+
+
+void ABattleCharacter::ClearJumpBuffer()
+{
+	bJumpBuffered = false;
 }
 
 void ABattleCharacter::TrySetSurfaceFromHit(const FHitResult& Hit)
@@ -1401,7 +1485,6 @@ void ABattleCharacter::Tick(float DeltaTime) {
 	UpdateSurfaceFromFloor();
 
 
-
 	//AddMovementInput(MoveDirection, 1.0f);
 	UpdateRunnerMovement(DeltaTime);
 
@@ -1413,6 +1496,23 @@ void ABattleCharacter::Tick(float DeltaTime) {
 
 	const UCharacterMovementComponent* Movement = GetCharacterMovement();
 
+
+	//점프 추가
+	const float CurrentTime =
+		GetWorld()->GetTimeSeconds();
+
+	const bool bHasBufferedJump =
+		CurrentTime - LastJumpInputTime <= JumpBufferDuration;
+
+	if (bHasBufferedJump && CanJump())
+	{
+		Jump();
+
+		// 한 번 실행했으니 버퍼 삭제
+		LastJumpInputTime = -1000.0f;
+	}
+	
+	
 	//UE_LOG(
 	//	LogTemp,
 	//	Warning,

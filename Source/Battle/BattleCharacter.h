@@ -169,6 +169,21 @@ public:
 
 	UFUNCTION(BlueprintCallable)
 	void ApplySurfaceChange(const FVector& NewNormal);
+
+
+	//점프 버퍼
+	bool bJumpBuffered = false;
+	float LastJumpInputTime = -1000.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Jump")
+	float JumpBufferDuration = 0.25f;
+
+	FTimerHandle JumpBufferTimerHandle;
+
+	void HandleJumpInput();
+	void ClearJumpBuffer();
+
+	virtual void Landed(const FHitResult& Hit) override;
 	//////////////////////////////////////////////////////////
 	//추격자 클래스
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Runner|Chaser")
