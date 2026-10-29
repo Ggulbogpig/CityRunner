@@ -11,6 +11,7 @@ class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
+class UNiagaraComponent;
 struct FInputActionValue;
 
 
@@ -61,6 +62,14 @@ class ABattleCharacter : public ACharacter
 	/** Look Input Action */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* LookAction;
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* DashAction;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* PauseAction;
+
 
 
 
@@ -128,6 +137,54 @@ public:
 	FVector CurrentWallNormal = FVector::ZeroVector;
 
 
+	UPROPERTY(BlueprintReadOnly, Category = "Dash")
+	bool bDashActive = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dash")
+	float DashSpeed = 1800.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dash")
+	float DashDuration = 0.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dash")
+	
+	FTimerHandle DashTimerHandle;
+
+	UFUNCTION(BlueprintCallable, Category = "Dash")
+	void StartDash();
+
+	void EndDash();
+
+	void HandleDashInput();
+
+
+	UPROPERTY(EditAnywhere, Category = "Dash")
+	float DashExitHoverTime = 0.25f;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Dash")
+	bool bDashExitHover = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dash VFX")
+	UNiagaraComponent* DashVFX;
+
+	FTimerHandle DashExitHoverTimerHandle;
+
+	void EndDashExitHover();
+
+	UPROPERTY(BlueprintReadOnly, Category = "Item")
+	int32 DashItemCount = 0;
+
+	UFUNCTION(BlueprintCallable, Category = "Item")
+	void AddDashItem();
+
+	UFUNCTION(BlueprintCallable, Category = "Item")
+	bool UseDashItem();
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> PauseMenuClass;
+
+
+
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tunnel")
 	ETunnelOrientation CurrentTunnelOrientation = ETunnelOrientation::Floor;
@@ -177,6 +234,21 @@ public:
 
 	UPROPERTY(EditAnywhere, Category = "Jump")
 	float JumpBufferDuration = 0.25f;
+
+	UPROPERTY(EditAnywhere, Category = "Jump")
+	float CoyoteTimeDuration = 0.15f;
+
+	float LastGroundedTime = -1000.f;
+
+	UPROPERTY(EditAnywhere, Category = "Dash")
+	float DashJumpGraceTime = 0.3f;
+
+	bool bDashJumpGrace = false;
+
+	FTimerHandle DashJumpGraceTimerHandle;
+
+	void EndDashJumpGrace();
+
 
 	FTimerHandle JumpBufferTimerHandle;
 
@@ -286,7 +358,7 @@ protected:
 
 	void StartSlide();
 	void EndSlide();
-	
+	void PauseGame();
 			
 
 protected:

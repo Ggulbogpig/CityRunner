@@ -10,6 +10,11 @@
 #include "EnhancedInputComponent.h"
 #include "EnhancedInputSubsystems.h"
 #include "InputActionValue.h"
+#include "NiagaraComponent.h"
+#include "NiagaraSystem.h"
+#include "Blueprint/UserWidget.h"
+#include "GameFramework/PlayerController.h"
+#include "Kismet/GameplayStatics.h"
 
 #include "BattleGameMode.h"
 #include "Spikes.h"
@@ -94,6 +99,10 @@ ABattleCharacter::ABattleCharacter()
 		SlideAction = SlideActionAsset.Object;
 	}
 
+	DashVFX = CreateDefaultSubobject<UNiagaraComponent>(TEXT("DashVFX"));
+	DashVFX->SetupAttachment(GetMesh());
+	DashVFX->SetAutoActivate(false);
+
 }
 
 void ABattleCharacter::BeginPlay()
@@ -173,6 +182,31 @@ void ABattleCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 			&ABattleCharacter::StopMove
 		);
 
+		EnhancedInputComponent->BindAction(
+			DashAction,
+			ETriggerEvent::Started,
+			this,
+			&ABattleCharacter::HandleDashInput
+		);
+
+		if (PauseAction)
+		{
+			UE_LOG(LogTemp, Warning, TEXT("PauseAction = %s"), *PauseAction->GetName());
+
+			EnhancedInputComponent->BindAction(
+				PauseAction,
+				ETriggerEvent::Started,
+				this,
+				&ABattleCharacter::PauseGame
+			);
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("PauseAction NULL"));
+		}
+
+
+
 		//EnhancedInputComponent->BindAction(
 		//	SlideAction,
 		//	ETriggerEvent::Started,
@@ -241,6 +275,31 @@ void ABattleCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 	}
 }
 
+void ABattleCharacter::PauseGame()
+{
+	UE_LOG(LogTemp, Warning, TEXT("PAUSE INPUT RECEIVED"));
+
+	APlayerController* PC = GetWorld()->GetFirstPlayerController();
+	if (!PC || !PauseMenuClass)
+		return;
+
+	UUserWidget* PauseMenu =
+		CreateWidget<UUserWidget>(PC, PauseMenuClass);
+
+	if (PauseMenu)
+	{
+		PauseMenu->AddToViewport();
+
+		PC->bShowMouseCursor = true;
+
+		FInputModeGameAndUI InputMode;
+		InputMode.SetWidgetToFocus(PauseMenu->TakeWidget());
+		PC->SetInputMode(InputMode);
+
+		UGameplayStatics::SetGamePaused(GetWorld(), true);
+	}
+}
+
 //void ABattleCharacter::Move(const FInputActionValue& Value)
 //{
 //	// input is a Vector2D
@@ -275,6 +334,144 @@ void ABattleCharacter::UpdateRunSpeed(int DifficultyLevel)
 
 	GetCharacterMovement()->MaxWalkSpeed =
 		FMath::Min(NewSpeed, MaxRunSpeed);
+}
+
+void ABattleCharacter::StartDash()
+{
+	if (bDashActive)
+		return;
+
+	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
+	if (!MoveComp)
+		return;
+
+	bDashActive = true;
+
+	if (DashVFX)
+	{
+		DashVFX->Activate(true);
+	}
+
+	// 속도 증가
+	//MoveComp->MaxWalkSpeed = DashSpeed;
+
+	// Dash 중에는 구멍에서 떨어지지 않도록 중력 제거
+	//MoveComp->GravityScale = 0.0f;
+
+	// 현재 중력 방향으로 이미 떨어지고 있던 속도 제거
+	const FVector GravityDir =
+		MoveComp->GetGravityDirection().GetSafeNormal();
+
+	const FVector CurrentUp = -GravityDir;
+
+	AddActorWorldOffset(
+		CurrentUp * 150,
+		true
+	);
+
+	FVector Velocity = MoveComp->Velocity;
+
+	const float GravityVelocity =
+		FVector::DotProduct(Velocity, GravityDir);
+
+	if (GravityVelocity > 0.0f)
+	{
+		Velocity -= GravityDir * GravityVelocity;
+	}
+
+	// 전진 Dash 속도 보장
+	const FVector Forward = BaseRunDirection.GetSafeNormal();
+
+	const float CurrentForwardSpeed =
+		FVector::DotProduct(Velocity, Forward);
+
+	if (CurrentForwardSpeed < DashSpeed)
+	{
+		Velocity += Forward * (DashSpeed - CurrentForwardSpeed);
+	}
+
+	MoveComp->Velocity = Velocity;
+
+	GetWorldTimerManager().SetTimer(
+		DashTimerHandle,
+		this,
+		&ABattleCharacter::EndDash,
+		DashDuration,
+		false
+	);
+}
+
+void ABattleCharacter::EndDash()
+{
+	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
+	if (!MoveComp)
+		return;
+
+	bDashActive = false;
+
+	if (DashVFX)
+	{
+		DashVFX->Deactivate();
+	}
+
+	bDashJumpGrace = true;
+	// Dash 종료 후 잠깐 낙하 방지
+	bDashExitHover = true;
+
+	const FVector GravityDir =
+		MoveComp->GetGravityDirection().GetSafeNormal();
+
+	const FVector CurrentUp = -GravityDir;
+
+	FVector Velocity = MoveComp->Velocity;
+
+	// 중력 방향으로 이미 떨어지는 속도 제거
+	const float GravitySpeed =
+		FVector::DotProduct(Velocity, GravityDir);
+
+	if (GravitySpeed > 0.0f)
+	{
+		Velocity -= GravityDir * GravitySpeed;
+	}
+
+	GetWorldTimerManager().SetTimer(
+		DashJumpGraceTimerHandle,
+		this,
+		&ABattleCharacter::EndDashJumpGrace,
+		DashJumpGraceTime,
+		false
+	);
+
+	GetWorldTimerManager().SetTimer(
+		DashExitHoverTimerHandle,
+		this,
+		&ABattleCharacter::EndDashExitHover,
+		DashExitHoverTime,
+		false
+	);
+
+	// Dash 종료 순간 살짝 위로 띄우기
+	//Velocity += CurrentUp * 250;
+
+	//MoveComp->Velocity = Velocity;
+
+	//MoveComp->MaxWalkSpeed = NormalRunSpeed;
+	//MoveComp->GravityScale = 1.75f;
+}
+
+void ABattleCharacter::HandleDashInput()
+{
+	if (!UseDashItem())
+	{
+		return;
+	}
+
+	StartDash();
+}
+
+void ABattleCharacter::EndDashExitHover()
+{
+	bDashExitHover = false;
 }
 
 void ABattleCharacter::SetTunnelOrientation(ETunnelOrientation NewOrientation)
@@ -315,6 +512,42 @@ void ABattleCharacter::SetTunnelOrientation(ETunnelOrientation NewOrientation)
 	//	GetCharacterMovement()->IsFalling(),
 	//	*GetCharacterMovement()->GetGravityDirection().ToString(),
 	//	*GetCharacterMovement()->Velocity.ToString());
+}
+
+
+void ABattleCharacter::AddDashItem()
+{
+	DashItemCount++;
+
+	UE_LOG(LogTemp, Warning,
+		TEXT("Dash Item Added! Count: %d"),
+		DashItemCount);
+}
+
+bool ABattleCharacter::UseDashItem()
+{
+	if (DashItemCount <= 0)
+	{
+		UE_LOG(LogTemp, Warning,
+			TEXT("No Dash Item"));
+
+		return false;
+	}
+
+	DashItemCount--;
+	ABattleGameMode* GameMode =
+		Cast<ABattleGameMode>(
+			UGameplayStatics::GetGameMode(this)
+		);
+	if (GameMode) {
+		
+		UE_LOG(LogTemp, Warning,
+			TEXT("Dash Item Used! Remaining: %d"),
+			DashItemCount);
+	}
+
+
+	return true;
 }
 
 void ABattleCharacter::RotateTunnelOrientationRight()
@@ -534,21 +767,55 @@ void ABattleCharacter::Landed(const FHitResult& Hit)
 //	);
 //}
 
+void ABattleCharacter::EndDashJumpGrace()
+{
+	bDashJumpGrace = false;
+}
+
 void ABattleCharacter::HandleJumpInput()
 {
-	// 점프 입력 시각 저장
 	LastJumpInputTime = GetWorld()->GetTimeSeconds();
 
-	// 지금 바로 점프 가능하면 즉시 실행
+	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
+	if (!MoveComp)
+		return;
+
 	if (CanJump())
 	{
 		Jump();
+		LastJumpInputTime = -1000.f;
+		return;
+	}
 
-		// 이미 소비했으므로 무효화
-		LastJumpInputTime = -1000.0f;
+	// Dash 직후 공중이라도 점프 허용
+	if (bDashJumpGrace)
+	{
+		const FVector CurrentUp =
+			-MoveComp->GetGravityDirection().GetSafeNormal();
+
+		FVector Velocity = MoveComp->Velocity;
+
+		// 현재 Up 방향 속도 제거
+		const float UpSpeed =
+			FVector::DotProduct(Velocity, CurrentUp);
+
+		Velocity -= CurrentUp * UpSpeed;
+
+		// 정상 점프 속도 부여
+		Velocity += CurrentUp * MoveComp->JumpZVelocity;
+
+		MoveComp->Velocity = Velocity;
+		MoveComp->SetMovementMode(MOVE_Falling);
+
+		bDashJumpGrace = false;
+
+		GetWorldTimerManager().ClearTimer(
+			DashJumpGraceTimerHandle
+		);
+
+		LastJumpInputTime = -1000.f;
 	}
 }
-
 
 void ABattleCharacter::ClearJumpBuffer()
 {
@@ -600,14 +867,17 @@ void ABattleCharacter::TrySetSurfaceFromHit(const FHitResult& Hit)
 		return;
 	}
 
-	//UE_LOG(
-	//	LogTemp,
-	//	Warning,
-	//	TEXT("SURFACE HIT | Normal=%s CurrentUp=%s Angle=%.2f"),
-	//	*HitNormal.ToString(),
-	//	*CurrentUp.ToString(),
-	//	Angle
-	//);
+	UE_LOG(LogTemp, Warning,
+		TEXT("SURFACE HIT | Actor=%s Component=%s Point=%s Normal=%s CurrentUp=%s Angle=%.2f"),
+		*GetNameSafe(Hit.GetActor()),
+		*GetNameSafe(Hit.GetComponent()),
+		*Hit.ImpactPoint.ToString(),
+		*HitNormal.ToString(),
+		*CurrentUp.ToString(),
+		Angle
+	);
+
+
 
 	// 거의 같은 면이면 무시
 	if (Angle < 10.0f)
@@ -1320,6 +1590,25 @@ void ABattleCharacter::UpdateRunnerMovement(float DeltaTime)
 	// 자동 전진
 	AddMovementInput(BaseRunDirection, 1.0f);
 
+	//Dash 모드에서는 추락 방지
+	if (bDashActive || bDashExitHover)
+	{
+		const FVector GravityDir =
+			MoveComp->GetGravityDirection().GetSafeNormal();
+
+		FVector Velocity = MoveComp->Velocity;
+
+		const float GravitySpeed =
+			FVector::DotProduct(Velocity, GravityDir);
+
+		// Dash 중에는 중력 방향으로 내려가는 속도 금지
+		if (GravitySpeed > 0.0f)
+		{
+			Velocity -= GravityDir * GravitySpeed;
+			MoveComp->Velocity = Velocity;
+		}
+	}
+
 	if (bOnWall)
 	{
 		// 벽의 평면 안에서의 좌우 방향
@@ -1504,13 +1793,26 @@ void ABattleCharacter::Tick(float DeltaTime) {
 	const bool bHasBufferedJump =
 		CurrentTime - LastJumpInputTime <= JumpBufferDuration;
 
-	if (bHasBufferedJump && CanJump())
+	//코요테 타임 추가 - > 발판에서 막 떨어진 직후 점프 입력을 살림. 
+	const bool bWithinCoyoteTime =
+		CurrentTime - LastGroundedTime <= CoyoteTimeDuration;
+
+	if (bHasBufferedJump &&
+		(CanJump() || bWithinCoyoteTime))
 	{
 		Jump();
 
-		// 한 번 실행했으니 버퍼 삭제
-		LastJumpInputTime = -1000.0f;
+		LastJumpInputTime = -1000.f;
+		LastGroundedTime = -1000.f;
 	}
+
+	//if (bHasBufferedJump && CanJump())
+	//{
+	//	Jump();
+
+	//	// 한 번 실행했으니 버퍼 삭제
+	//	LastJumpInputTime = -1000.0f;
+	//}
 	
 	
 	//UE_LOG(

@@ -37,11 +37,30 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnLevelSpawned(ABaseLevel* NewLevel);
 
+	UFUNCTION()
+	void SpawnStartLevel(TSubclassOf<ABaseLevel> StartLevelClass);
+
 
 
 protected:
 	APawn* Player;
 
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level")
+	TSubclassOf<ABaseLevel> StartLevel;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level")
+	TSubclassOf<ABaseLevel> StartLevel1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level")
+	TSubclassOf<ABaseLevel> StartLevel2;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level")
+	TSubclassOf<ABaseLevel> TransitionLevel1To2;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level")
+	TSubclassOf<ABaseLevel> TransitionLevel3To4;
+
+	int32 LastMapLevel = 1;
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<ABaseLevel> Level1;
@@ -100,9 +119,63 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<ABaseLevel> Level19;
+
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level20;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level21;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level22;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level23;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level24;
+	
+
+
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level30;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level31;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level32;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level33;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level34;
+
+
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level40;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level41;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level42;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level43;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level44;
 	TArray<ABaseLevel*> LevelList;
+
+
 public:
 	int RandomLevel;
+	bool bPendingTransition = false;
 
 	FVector SpawnLocation = FVector();
 	FRotator SpawnRotation = FRotator();
