@@ -11,7 +11,19 @@ class USpringArmComponent;
 class UCameraComponent;
 class UInputMappingContext;
 class UInputAction;
+class UNiagaraComponent;
 struct FInputActionValue;
+
+
+UENUM(BlueprintType)
+enum class ETunnelOrientation : uint8
+{
+	Floor       UMETA(DisplayName = "Floor"),
+	RightWall   UMETA(DisplayName = "RightWall"),
+	Ceiling     UMETA(DisplayName = "Ceiling"),
+	LeftWall    UMETA(DisplayName = "LeftWall")
+};
+
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
@@ -27,6 +39,9 @@ class ABattleCharacter : public ACharacter
 	/** Follow camera */
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
 	UCameraComponent* FollowCamera;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = Camera, meta = (AllowPrivateAccess = "true"))
+	USceneComponent* CameraRollRoot;
 	
 	/** MappingContext */
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
@@ -48,6 +63,14 @@ class ABattleCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* LookAction;
 
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* DashAction;
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* PauseAction;
+
+
 
 
 
@@ -59,7 +82,7 @@ private:
 	FVector RunDirection;
 	FVector BaseRunDirection;
 	FVector CurrentRunDirection;
-	float LateralInput;
+
 
 
 
@@ -74,6 +97,26 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	bool bIsSliding = false;
 
+	UPROPERTY(BlueprintReadOnly, Category = "Movement")
+	float LateralInput;
+
+	//2인 멀티 네트워크 추가
+	UPROPERTY(ReplicatedUsing = OnRep_CanRun, BlueprintReadOnly, Category = "Runner")
+	bool bCanRun = false;
+
+	UFUNCTION(BlueprintCallable, Category = "Runner")
+	void SetCanRun(bool bNewCanRun);
+
+
+	UFUNCTION()
+	void OnRep_CanRun();
+
+	
+
+	virtual void GetLifetimeReplicatedProps(
+		TArray<FLifetimeProperty>& OutLifetimeProps
+	) const override;
+
 
 	float DefaultCapsuleHalfHeight;
 	float SlideCapsuleHalfHeight = 48.0f;
@@ -86,10 +129,15 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Runner")
 	void SetMapRotating(bool bRotating);
 
+
+	bool bSurfaceChanging = false;
+
+	FTimerHandle SurfaceChangeTimer;
+
 	
 	// 속도 관련
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Speed")
-	float StartRunSpeed = 500.0f;
+	float StartRunSpeed = 800.0f;
 
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Speed")
 	float SpeedIncreaseAmount = 100.0f;
@@ -100,13 +148,136 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Speed")
 	void UpdateRunSpeed(int DifficultyLevel);
 
+
+
 	UPROPERTY(BlueprintReadWrite, Category = "WallRun")
 	FVector CurrentWallNormal = FVector::ZeroVector;
 
 
+	UPROPERTY(BlueprintReadOnly, Category = "Dash")
+	bool bDashActive = false;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dash")
+	float DashSpeed = 1800.f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dash")
+	float DashDuration = 0.5f;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Dash")
+	
+	FTimerHandle DashTimerHandle;
+
+	UFUNCTION(BlueprintCallable, Category = "Dash")
+	void StartDash();
+
+	void EndDash();
+
+	void HandleDashInput();
+
+
+	UPROPERTY(EditAnywhere, Category = "Dash")
+	float DashExitHoverTime = 0.25f;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Dash")
+	bool bDashExitHover = false;
+
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Dash VFX")
+	UNiagaraComponent* DashVFX;
+
+	FTimerHandle DashExitHoverTimerHandle;
+
+	void EndDashExitHover();
+
+	UPROPERTY(BlueprintReadOnly, Category = "Item")
+	int32 DashItemCount = 0;
+
+	UFUNCTION(BlueprintCallable, Category = "Item")
+	void AddDashItem();
+
+	UFUNCTION(BlueprintCallable, Category = "Item")
+	bool UseDashItem();
+
+	UPROPERTY(EditDefaultsOnly, Category = "UI")
+	TSubclassOf<UUserWidget> PauseMenuClass;
 
 
 
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Tunnel")
+	ETunnelOrientation CurrentTunnelOrientation = ETunnelOrientation::Floor;
+
+
+	UFUNCTION(BlueprintCallable)
+	void SetTunnelOrientation(ETunnelOrientation NewOrientation);
+
+	UFUNCTION(BlueprintCallable)
+	void RotateTunnelOrientationRight();
+
+	UFUNCTION(BlueprintCallable)
+	void RotateTunnelOrientationLeft();
+
+	UFUNCTION(BlueprintCallable)
+	void UnlockSurfaceChange();
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	class UInputAction* TestGravityAction;
+
+	UFUNCTION()
+	void TestRightGravity();
+
+	UFUNCTION(BlueprintCallable)
+	void TestRightOrientation();
+
+	UFUNCTION(BlueprintCallable)
+	void TestLeftOrientation();
+
+	UFUNCTION(BlueprintCallable)
+	void TrySetSurfaceFromHit(const FHitResult& Hit);
+
+	UFUNCTION(BlueprintCallable)
+	void SetSurfaceNormal(const FVector& SurfaceNormal);
+
+	UFUNCTION(BlueprintCallable)
+	void UpdateSurfaceFromFloor();
+	
+
+	UFUNCTION(BlueprintCallable)
+	void ApplySurfaceChange(const FVector& NewNormal);
+
+	UFUNCTION(BlueprintCallable)
+	bool IsRealSurface(const FHitResult& OriginalHit,const FVector& SurfaceNormal);
+	
+	UFUNCTION(BlueprintCallable, Category = "Ending")
+	bool HasSurfaceBelow(float Distance) const;
+
+	//점프 버퍼
+	bool bJumpBuffered = false;
+	float LastJumpInputTime = -1000.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Jump")
+	float JumpBufferDuration = 0.25f;
+
+	UPROPERTY(EditAnywhere, Category = "Jump")
+	float CoyoteTimeDuration = 0.15f;
+
+	float LastGroundedTime = -1000.f;
+
+	UPROPERTY(EditAnywhere, Category = "Dash")
+	float DashJumpGraceTime = 0.3f;
+
+	bool bDashJumpGrace = false;
+
+	FTimerHandle DashJumpGraceTimerHandle;
+
+	void EndDashJumpGrace();
+
+
+	FTimerHandle JumpBufferTimerHandle;
+
+	void HandleJumpInput();
+	void ClearJumpBuffer();
+
+	virtual void Landed(const FHitResult& Hit) override;
 	//////////////////////////////////////////////////////////
 	//추격자 클래스
 	//UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Runner|Chaser")
@@ -153,7 +324,37 @@ public:
 
 	UFUNCTION(BlueprintCallable, Category = "Runner")
 	void DieAndRestart();
-	
+
+
+
+	// 카메라 회전 시작
+	UFUNCTION(BlueprintCallable, Category = "Camera")
+	void RotateCameraRight();
+
+	UFUNCTION(BlueprintCallable, Category = "Camera")
+	void RotateCameraLeft();
+
+	UFUNCTION(BlueprintCallable, Category="Camera")
+	void RotateCameraByAngle(float Angle);
+
+	void UpdateCameraRoll(float DeltaTime);
+
+	UFUNCTION(BlueprintCallable, Category = "Tunnel")
+	void RestoreTunnelGravity();
+
+	UFUNCTION(BlueprintImplementableEvent, Category = "WallRun")
+	void RequestWallOff();
+
+
+private:
+	bool bCameraRotating = false;
+
+	float CameraRollStart = 0.0f;
+	float CameraRollTarget = 0.0f;
+	float CameraRollElapsed = 0.0f;
+
+	UPROPERTY(EditAnywhere, Category = "Camera")
+	float CameraRollDuration = 0.5f;
 
 
 	
@@ -179,7 +380,7 @@ protected:
 
 	void StartSlide();
 	void EndSlide();
-	
+	void PauseGame();
 			
 
 protected:

@@ -25,6 +25,8 @@ public:
 	// Called every frame
 	virtual void Tick(float DeltaTime) override;
 
+
+
 protected:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Triggers")
@@ -32,6 +34,7 @@ protected:
 
 	UPROPERTY(BlueprintReadWrite, EditAnywhere, Category = "Triggers")
 	UBoxComponent* SpawnLocation;
+
 
 public:
 

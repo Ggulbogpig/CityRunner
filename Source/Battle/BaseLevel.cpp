@@ -2,8 +2,10 @@
 
 
 #include "BaseLevel.h"
-
+#include "Kismet/GameplayStatics.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/BoxComponent.h"
+#include "BattleCharacter.h"
 
 // Sets default values
 ABaseLevel::ABaseLevel()
@@ -11,12 +13,16 @@ ABaseLevel::ABaseLevel()
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
 
+
 }
 
 // Called when the game starts or when spawned
 void ABaseLevel::BeginPlay()
 {
 	Super::BeginPlay();
+
+
+
 
 	if (Trigger != nullptr) { Trigger->bHiddenInGame = true; }
 	
