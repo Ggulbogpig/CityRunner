@@ -15,10 +15,10 @@ class BATTLE_API AWallSpike : public ASpikes
 	GENERATED_BODY()
 
 public:
-	AWallSpike();
+	//AWallSpike();
 protected:
-	virtual void BeginPlay() override;
+	//virtual void BeginPlay() override;
 public:
-	virtual void Tick(float DeltaTime) override;
+	//virtual void Tick(float DeltaTime) override;
 	
 };

@@ -2,18 +2,18 @@
 
 
 #include "WallSpike.h"
-AWallSpike::AWallSpike() {
-	PrimaryActorTick.bCanEverTick = true;
-}
+//AWallSpike::AWallSpike() {
+//	PrimaryActorTick.bCanEverTick = true;
+//}
 
-void AWallSpike::BeginPlay() {
-	Super::BeginPlay();
+//void AWallSpike::BeginPlay() {
+//	Super::BeginPlay();
+//
+//	this->GetRootComponent()->ComponentVelocity = FVector(0, 0, 0); //(25,0,0)
+//}
 
-	this->GetRootComponent()->ComponentVelocity = FVector(0, 0, 0); //(25,0,0)
-}
-
-void AWallSpike::Tick(float DeltaTime) {
-	Super::Tick(DeltaTime);
-	SetActorLocation(GetActorLocation() + FVector(350 * DeltaTime, 0, 0), true);
-}
+//void AWallSpike::Tick(float DeltaTime) {
+//	Super::Tick(DeltaTime);
+//	SetActorLocation(GetActorLocation() + FVector(350 * DeltaTime, 0, 0), true);
+//}
 

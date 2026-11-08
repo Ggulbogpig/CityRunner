@@ -19,7 +19,7 @@
 
 #include "BattleGameMode.h"
 #include "Spikes.h"
-#include "WallSpike.h"
+//#include "WallSpike.h"
 #include "Engine.h"
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -54,6 +54,7 @@ ABattleCharacter::ABattleCharacter()
 	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
 
 	//멀티 리프리케이트 초기화
+	PrimaryActorTick.bCanEverTick = true;
 	bReplicates = true;
 	SetReplicateMovement(true);
 	//카메라 회전 수정 전
@@ -1886,7 +1887,7 @@ void ABattleCharacter::OnOverlapBegin(UPrimitiveComponent* OverlappedComp,
 		//	*GetNameSafe(OtherActor),
 		//	*GetNameSafe(OtherComp)
 		//);
-		ASpikes* WallSpike = Cast<AWallSpike>(OtherActor);
+		//ASpikes* WallSpike = Cast<AWallSpike>(OtherActor);
 		ASpikes* Spike = Cast<ASpikes>(OtherActor);
 		// BP_Level의 낙사 판정 Box인지 확인
 		const FName ComponentName = OtherComp->GetFName();
@@ -1901,7 +1902,7 @@ void ABattleCharacter::OnOverlapBegin(UPrimitiveComponent* OverlappedComp,
 		if (bKillBox) {
 			DieAndRestart();
 		}
-		else if ((WallSpike || Spike) && Cast<UStaticMeshComponent>(OtherComp)) {
+		else if ((Spike) && Cast<UStaticMeshComponent>(OtherComp)) {
 			OnTriggerChase();
 			
 		}
