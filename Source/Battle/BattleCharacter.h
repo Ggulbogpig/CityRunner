@@ -100,22 +100,6 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	float LateralInput;
 
-	//2인 멀티 네트워크 추가
-	UPROPERTY(ReplicatedUsing = OnRep_CanRun, BlueprintReadOnly, Category = "Runner")
-	bool bCanRun = false;
-
-	UFUNCTION(BlueprintCallable, Category = "Runner")
-	void SetCanRun(bool bNewCanRun);
-
-
-	UFUNCTION()
-	void OnRep_CanRun();
-
-	
-
-	virtual void GetLifetimeReplicatedProps(
-		TArray<FLifetimeProperty>& OutLifetimeProps
-	) const override;
 
 
 	float DefaultCapsuleHalfHeight;

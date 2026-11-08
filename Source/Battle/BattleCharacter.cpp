@@ -15,7 +15,7 @@
 #include "Blueprint/UserWidget.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
-#include "Net/UnrealNetwork.h"
+
 
 #include "BattleGameMode.h"
 #include "Spikes.h"
@@ -53,9 +53,7 @@ ABattleCharacter::ABattleCharacter()
 
 	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
 
-	//멀티 리프리케이트 초기화
-	bReplicates = true;
-	SetReplicateMovement(true);
+
 	//카메라 회전 수정 전
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	//CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -1718,28 +1716,7 @@ void ABattleCharacter::EndSlide()
 //	);
 //}
 
-void ABattleCharacter::SetCanRun(bool bNewCanRun)
-{
-	if (HasAuthority())
-	{
-		bCanRun = bNewCanRun;
-		OnRep_CanRun();
-	}
-}
 
-void ABattleCharacter::OnRep_CanRun()
-{
-	// 필요하면 여기서 시작 효과, 사운드 등을 처리
-}
-
-void ABattleCharacter::GetLifetimeReplicatedProps(
-	TArray<FLifetimeProperty>& OutLifetimeProps
-) const
-{
-	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
-
-	DOREPLIFETIME(ABattleCharacter, bCanRun);
-}
 
 void ABattleCharacter::UpdateRunnerMovement(float DeltaTime)
 {
@@ -1750,9 +1727,8 @@ void ABattleCharacter::UpdateRunnerMovement(float DeltaTime)
 	}
 
 	// 자동 전진
-	if (bCanRun) {
-		AddMovementInput(BaseRunDirection, 1.0f);
-	}
+	AddMovementInput(BaseRunDirection, 1.0f);
+	
 	
 
 	//Dash 모드에서는 추락 방지
