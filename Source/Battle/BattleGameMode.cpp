@@ -55,6 +55,11 @@ void ABattleGameMode::IncrementCoin()
     }
 }
 
+void ABattleGameMode::StopScore()
+{
+    bCanAddScore = false;
+}
+
 void ABattleGameMode::BeginPlay() {
 	Super::BeginPlay();
 
@@ -73,15 +78,17 @@ void ABattleGameMode::BeginPlay() {
 void ABattleGameMode::IncrementScoreOverTime()
 {
     // 점수 누적
-    CurrentScore += ScoreTickAmount;
-
+    if (bCanAddScore)
+    {
+        CurrentScore += ScoreTickAmount;
+    }
     // -------------------------
     // 맵 레벨 전환
     // -------------------------
     //const int NewMapLevel = (CurrentScore / 70) + 1;
     //테스트용
     const int NewMapLevel =
-        FMath::Clamp((CurrentScore / LevelChangeScore) + 1, 1, 5);
+        FMath::Clamp((CurrentScore / LevelChangeScore) + 1, 1, 6);
 
     if (NewMapLevel != MapLevel)
     {

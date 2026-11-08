@@ -15,6 +15,7 @@
 #include "Blueprint/UserWidget.h"
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
+#include "Net/UnrealNetwork.h"
 
 #include "BattleGameMode.h"
 #include "Spikes.h"
@@ -52,6 +53,9 @@ ABattleCharacter::ABattleCharacter()
 
 	GetCharacterMovement()->GetNavAgentPropertiesRef().bCanCrouch = true;
 
+	//멀티 리프리케이트 초기화
+	bReplicates = true;
+	SetReplicateMovement(true);
 	//카메라 회전 수정 전
 	// Create a camera boom (pulls in towards the player if there is a collision)
 	//CameraBoom = CreateDefaultSubobject<USpringArmComponent>(TEXT("CameraBoom"));
@@ -102,6 +106,8 @@ ABattleCharacter::ABattleCharacter()
 	DashVFX = CreateDefaultSubobject<UNiagaraComponent>(TEXT("DashVFX"));
 	DashVFX->SetupAttachment(GetMesh());
 	DashVFX->SetAutoActivate(false);
+
+
 
 }
 
@@ -710,6 +716,133 @@ void ABattleCharacter::ApplySurfaceChange(const FVector& NewNormal)
 	RotateCameraByAngle(SignedAngle);
 	SetSurfaceNormal(NewUp);
 }
+bool ABattleCharacter::IsRealSurface(
+	const FHitResult& OriginalHit,
+	const FVector& SurfaceNormal)
+{
+	if (!GetWorld() || !OriginalHit.GetComponent())
+		return false;
+
+	const FVector Normal = SurfaceNormal.GetSafeNormal();
+
+	// 후보 표면 위에서 사용할 두 접선 방향 생성
+	FVector Tangent1 =
+		FVector::CrossProduct(Normal, BaseRunDirection).GetSafeNormal();
+
+	// 혹시 평행해서 Cross 결과가 거의 0이면 다른 축 사용
+	if (Tangent1.IsNearlyZero())
+	{
+		Tangent1 =
+			FVector::CrossProduct(Normal, FVector::UpVector).GetSafeNormal();
+	}
+
+	const FVector Tangent2 =
+		FVector::CrossProduct(Normal, Tangent1).GetSafeNormal();
+
+	// 후보 표면 주변을 얼마나 넓게 검사할지
+	const float SampleOffset = 100.0f;
+
+	// 표면 바깥쪽에서 안쪽으로 Trace
+	const float TraceStartOffset = 20.0f;
+	const float TraceLength = 60.0f;
+
+	// 약간 굵게 검사
+	const float SphereRadius = 8.0f;
+
+	const FVector ImpactPoint = OriginalHit.ImpactPoint;
+
+	// 5개 지점:
+	// 중앙 / 좌 / 우 / 위 / 아래
+	const FVector SampleOffsets[] =
+	{
+		FVector::ZeroVector,
+		Tangent1 * SampleOffset,
+		-Tangent1 * SampleOffset,
+		Tangent2 * SampleOffset,
+		-Tangent2 * SampleOffset
+	};
+
+	int ValidHitCount = 0;
+
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+
+	const FCollisionShape Sphere =
+		FCollisionShape::MakeSphere(SphereRadius);
+
+	for (const FVector& Offset : SampleOffsets)
+	{
+		// 후보 표면 바깥에서 시작
+		const FVector Start =
+			ImpactPoint
+			+ Offset
+			+ Normal * TraceStartOffset;
+
+		// 표면 안쪽 방향으로 검사
+		const FVector End =
+			Start - Normal * TraceLength;
+
+		FHitResult VerifyHit;
+
+		const bool bHit = GetWorld()->SweepSingleByChannel(
+			VerifyHit,
+			Start,
+			End,
+			FQuat::Identity,
+			ECC_Visibility,
+			Sphere,
+			Params
+		);
+
+		if (!bHit)
+			continue;
+
+		// 처음 Hit한 컴포넌트와 같은 컴포넌트인지
+		if (VerifyHit.GetComponent() != OriginalHit.GetComponent())
+			continue;
+
+		// Normal 방향도 실제 후보 Normal과 비슷한지 확인
+		const FVector VerifyNormal =
+			VerifyHit.ImpactNormal.GetSafeNormal();
+
+		const float NormalDot =
+			FVector::DotProduct(Normal, VerifyNormal);
+
+		// 약 25도 이내의 같은 방향 표면만 인정
+		if (NormalDot < 0.9f)
+			continue;
+
+		ValidHitCount++;
+	}
+
+	// 5개 중 최소 3개가 실제 동일 표면이어야 회전 허용
+	return ValidHitCount >= 3;
+}
+bool ABattleCharacter::HasSurfaceBelow(float Distance) const
+{
+	if (!GetWorld())
+		return false;
+
+	const FVector GravityDir =
+		GetCharacterMovement()->GetGravityDirection().GetSafeNormal();
+
+	const FVector Start = GetActorLocation();
+	const FVector End = Start + GravityDir * Distance;
+
+	FHitResult Hit;
+
+	FCollisionQueryParams Params;
+	Params.AddIgnoredActor(this);
+
+	return GetWorld()->LineTraceSingleByChannel(
+		Hit,
+		Start,
+		End,
+		ECC_Visibility,
+		Params
+	);
+}
+
 
 //void ABattleCharacter::Landed(const FHitResult& Hit)
 //{
@@ -887,6 +1020,12 @@ void ABattleCharacter::TrySetSurfaceFromHit(const FHitResult& Hit)
 
 	// 일단 테스트 단계에서는 100도 이하까지 허용
 	if (Angle > 100.0f)
+	{
+		return;
+	}
+
+	// 모서리에 부딪힌 경우 무시
+	if (!IsRealSurface(Hit, HitNormal))
 	{
 		return;
 	}
@@ -1579,6 +1718,29 @@ void ABattleCharacter::EndSlide()
 //	);
 //}
 
+void ABattleCharacter::SetCanRun(bool bNewCanRun)
+{
+	if (HasAuthority())
+	{
+		bCanRun = bNewCanRun;
+		OnRep_CanRun();
+	}
+}
+
+void ABattleCharacter::OnRep_CanRun()
+{
+	// 필요하면 여기서 시작 효과, 사운드 등을 처리
+}
+
+void ABattleCharacter::GetLifetimeReplicatedProps(
+	TArray<FLifetimeProperty>& OutLifetimeProps
+) const
+{
+	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
+
+	DOREPLIFETIME(ABattleCharacter, bCanRun);
+}
+
 void ABattleCharacter::UpdateRunnerMovement(float DeltaTime)
 {
 	UCharacterMovementComponent* MoveComp = GetCharacterMovement();
@@ -1588,7 +1750,10 @@ void ABattleCharacter::UpdateRunnerMovement(float DeltaTime)
 	}
 
 	// 자동 전진
-	AddMovementInput(BaseRunDirection, 1.0f);
+	if (bCanRun) {
+		AddMovementInput(BaseRunDirection, 1.0f);
+	}
+	
 
 	//Dash 모드에서는 추락 방지
 	if (bDashActive || bDashExitHover)

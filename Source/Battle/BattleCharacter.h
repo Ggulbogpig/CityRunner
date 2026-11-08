@@ -100,6 +100,23 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Movement")
 	float LateralInput;
 
+	//2인 멀티 네트워크 추가
+	UPROPERTY(ReplicatedUsing = OnRep_CanRun, BlueprintReadOnly, Category = "Runner")
+	bool bCanRun = false;
+
+	UFUNCTION(BlueprintCallable, Category = "Runner")
+	void SetCanRun(bool bNewCanRun);
+
+
+	UFUNCTION()
+	void OnRep_CanRun();
+
+	
+
+	virtual void GetLifetimeReplicatedProps(
+		TArray<FLifetimeProperty>& OutLifetimeProps
+	) const override;
+
 
 	float DefaultCapsuleHalfHeight;
 	float SlideCapsuleHalfHeight = 48.0f;
@@ -227,6 +244,11 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void ApplySurfaceChange(const FVector& NewNormal);
 
+	UFUNCTION(BlueprintCallable)
+	bool IsRealSurface(const FHitResult& OriginalHit,const FVector& SurfaceNormal);
+	
+	UFUNCTION(BlueprintCallable, Category = "Ending")
+	bool HasSurfaceBelow(float Distance) const;
 
 	//점프 버퍼
 	bool bJumpBuffered = false;

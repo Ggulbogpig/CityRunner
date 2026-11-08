@@ -170,6 +170,25 @@ protected:
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<ABaseLevel> Level44;
+
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level50;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level51;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level52;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level53;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level54;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level55;
 	TArray<ABaseLevel*> LevelList;
 
 

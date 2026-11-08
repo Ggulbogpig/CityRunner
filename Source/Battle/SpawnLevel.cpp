@@ -549,6 +549,64 @@ void ASpawnLevel::SpawnLevel(bool IsFirst)
                         SpawnInfo);
                 }
             }
+
+            // -------------------------------------------------
+            // Level 6
+            // -------------------------------------------------
+
+            else if (LastMapLevel == 6)
+            {
+                RandomLevel = FMath::RandRange(1, 6);
+
+                if (RandomLevel == 1)
+                {
+                    NewLevel = GetWorld()->SpawnActor<ABaseLevel>(
+                        Level50,
+                        SpawnLocation,
+                        SpawnRotation,
+                        SpawnInfo);
+                }
+                else if (RandomLevel == 2)
+                {
+                    NewLevel = GetWorld()->SpawnActor<ABaseLevel>(
+                        Level51,
+                        SpawnLocation,
+                        SpawnRotation,
+                        SpawnInfo);
+                }
+                else if (RandomLevel == 3)
+                {
+                    NewLevel = GetWorld()->SpawnActor<ABaseLevel>(
+                        Level52,
+                        SpawnLocation,
+                        SpawnRotation,
+                        SpawnInfo);
+                }
+                else if (RandomLevel == 4)
+                {
+                    NewLevel = GetWorld()->SpawnActor<ABaseLevel>(
+                        Level53,
+                        SpawnLocation,
+                        SpawnRotation,
+                        SpawnInfo);
+                }
+                else if (RandomLevel == 5)
+                {
+                    NewLevel = GetWorld()->SpawnActor<ABaseLevel>(
+                        Level54,
+                        SpawnLocation,
+                        SpawnRotation,
+                        SpawnInfo);
+                }
+                else if (RandomLevel == 6)
+                {
+                    NewLevel = GetWorld()->SpawnActor<ABaseLevel>(
+                        Level55,
+                        SpawnLocation,
+                        SpawnRotation,
+                        SpawnInfo);
+                }
+            }
         }
     }
 
