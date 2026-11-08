@@ -37,8 +37,30 @@ public:
 	UFUNCTION(BlueprintImplementableEvent)
 	void OnLevelSpawned(ABaseLevel* NewLevel);
 
+	UFUNCTION()
+	void SpawnStartLevel(TSubclassOf<ABaseLevel> StartLevelClass);
+
+
+
 protected:
 	APawn* Player;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level")
+	TSubclassOf<ABaseLevel> StartLevel;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level")
+	TSubclassOf<ABaseLevel> StartLevel1;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level")
+	TSubclassOf<ABaseLevel> StartLevel2;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level")
+	TSubclassOf<ABaseLevel> TransitionLevel1To2;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Level")
+	TSubclassOf<ABaseLevel> TransitionLevel3To4;
+
+	int32 LastMapLevel = 1;
 
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<ABaseLevel> Level1;
@@ -70,9 +92,109 @@ protected:
 	UPROPERTY(EditAnywhere)
 	TSubclassOf<ABaseLevel> Level10;
 
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level11;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level12;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level13;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level14;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level15;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level16;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level17;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level18;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level19;
+
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level20;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level21;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level22;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level23;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level24;
+	
+
+
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level30;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level31;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level32;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level33;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level34;
+
+
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level40;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level41;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level42;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level43;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level44;
+
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level50;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level51;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level52;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level53;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level54;
+
+	UPROPERTY(EditAnywhere)
+	TSubclassOf<ABaseLevel> Level55;
 	TArray<ABaseLevel*> LevelList;
+
+
 public:
 	int RandomLevel;
+	bool bPendingTransition = false;
 
 	FVector SpawnLocation = FVector();
 	FRotator SpawnRotation = FRotator();

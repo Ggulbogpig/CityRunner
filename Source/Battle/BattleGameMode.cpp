@@ -12,6 +12,7 @@ ABattleGameMode::ABattleGameMode()
 	CurrentScore = 0;
 	ScoreTickAmount = 5;
 	ScoreInterval = 1.0f;
+    
 	//Game/Characters/BP_Character
 	//Game/ThirdPerson/Blueprints/BP_ThirdPersonCharacter1
 	//if (PlayerPawnBPClass.Class != NULL)
@@ -29,6 +30,34 @@ ABattleGameMode::ABattleGameMode()
 void ABattleGameMode::IncrementCoin()
 {
 	CurrentCoin += 1;
+
+    UE_LOG(LogTemp, Warning,
+        TEXT("IncrementCoin called / CurrentCoin = %d"),
+        CurrentCoin);
+
+ 
+    if (CurrentCoin >= 15)
+    {
+        CurrentCoin -= 15;
+
+        ABattleCharacter* Player =
+            Cast<ABattleCharacter>(
+                UGameplayStatics::GetPlayerCharacter(this, 0)
+            );
+
+        if (Player)
+        {
+            Player->AddDashItem();
+
+        }
+ 
+
+    }
+}
+
+void ABattleGameMode::StopScore()
+{
+    bCanAddScore = false;
 }
 
 void ABattleGameMode::BeginPlay() {
@@ -48,33 +77,99 @@ void ABattleGameMode::BeginPlay() {
 
 void ABattleGameMode::IncrementScoreOverTime()
 {
-	// 점수 누적
-	CurrentScore += ScoreTickAmount;
+    // 점수 누적
+    if (bCanAddScore)
+    {
+        CurrentScore += ScoreTickAmount;
+    }
+    // -------------------------
+    // 맵 레벨 전환
+    // -------------------------
+    //const int NewMapLevel = (CurrentScore / 70) + 1;
+    //테스트용
+    const int NewMapLevel =
+        FMath::Clamp((CurrentScore / LevelChangeScore) + 1, 1, 6);
 
-	// 로그 출력 (디버깅용)
-	UE_LOG(LogTemp, Warning, TEXT("Running Score: %d"), CurrentScore);
+    if (NewMapLevel != MapLevel)
+    {
+        MapLevel = NewMapLevel;
 
-	const int NewDifficultyLevel = CurrentScore / 50;
+        PendingMapLevel = NewMapLevel;
+        LevelEnterChunkCount = 0;
 
-	// 아직 같은 50점 구간이면 아무것도 안 함
-	if (NewDifficultyLevel == DifficultyLevel)
-	{
-		return;
-	}
+        UE_LOG(LogTemp, Warning,
+            TEXT("MAP LEVEL UP -> LV%d"),
+            MapLevel
+        );
+    }
 
-	DifficultyLevel = NewDifficultyLevel;
+    // -------------------------
+    // 난이도 레벨 전환
+    // -------------------------
+    const int NewDifficultyLevel = CurrentScore / 50;
 
-	ABattleCharacter* Player =
-		Cast<ABattleCharacter>(
-			UGameplayStatics::GetPlayerCharacter(this, 0)
-		);
+    if (NewDifficultyLevel == DifficultyLevel)
+    {
+        return;
+    }
 
-	if (Player)
-	{
-		Player->UpdateRunSpeed(DifficultyLevel);
-		UE_LOG(LogTemp, Warning, TEXT("Levelup"))
-	}
+    DifficultyLevel = NewDifficultyLevel;
+
+    ABattleCharacter* Player =
+        Cast<ABattleCharacter>(
+            UGameplayStatics::GetPlayerCharacter(this, 0)
+        );
+
+    if (Player)
+    {
+        Player->UpdateRunSpeed(DifficultyLevel);
+
+        UE_LOG(LogTemp, Warning,
+            TEXT("DIFFICULTY LEVEL UP -> %d"),
+            DifficultyLevel
+        );
+    }
 }
+
+//void ABattleGameMode::IncrementScoreOverTime()
+//{
+//	// 점수 누적
+//	CurrentScore += ScoreTickAmount;
+//
+//	// 로그 출력 (디버깅용)
+//	//UE_LOG(LogTemp, Warning, TEXT("Running Score: %d"), CurrentScore);
+//
+//	const int NewDifficultyLevel = CurrentScore / 50;
+//
+//	// 맵 레벨 전환
+//	if (CurrentScore >= 30 && MapLevel == 1)
+//	{
+//		MapLevel = 2;
+//
+//		UE_LOG(LogTemp, Warning,
+//			TEXT("MAP LEVEL UP -> LV2")
+//		);
+//	}
+//
+//	// 아직 같은 50점 구간이면 아무것도 안 함
+//	if (NewDifficultyLevel == DifficultyLevel)
+//	{
+//		return;
+//	}
+//
+//	DifficultyLevel = NewDifficultyLevel;
+//
+//	ABattleCharacter* Player =
+//		Cast<ABattleCharacter>(
+//			UGameplayStatics::GetPlayerCharacter(this, 0)
+//		);
+//
+//	if (Player)
+//	{
+//		Player->UpdateRunSpeed(DifficultyLevel);
+//		UE_LOG(LogTemp, Warning, TEXT("Levelup"))
+//	}
+//}
 
 void ABattleGameMode::GameOver()
 {

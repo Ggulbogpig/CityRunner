@@ -32,6 +32,32 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Score")
 	void IncrementCoin();
 
+	UPROPERTY(BlueprintReadOnly, Category = "Level")
+	int32 MapLevel = 1;
+
+
+	UPROPERTY(BlueprintReadOnly, Category = "Level")
+	int32 DisplayMapLevel = 1;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Level")
+	int32 PendingMapLevel = 1;
+
+	UPROPERTY(BlueprintReadOnly, Category = "Level")
+	int32 LevelEnterChunkCount = 0;
+
+
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Score")
+	int32 LevelChangeScore = 80;
+
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "Score")
+	bool bCanAddScore = true;
+
+	UFUNCTION(BlueprintCallable, Category = "Score")
+	void StopScore();
+
+
+
 	UPROPERTY()
 	TSoftClassPtr<APawn> PlayerPawnClass;
 
