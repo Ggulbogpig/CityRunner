@@ -13,6 +13,11 @@
 // Sets default values
 ASpawnLevel::ASpawnLevel()
 {
+    if (!HasAuthority())
+    {
+        return;
+    }
+
 
  	// Set this actor to call Tick() every frame.  You can turn this off to improve performance if you don't need it.
 	PrimaryActorTick.bCanEverTick = true;
@@ -25,6 +30,11 @@ ASpawnLevel::ASpawnLevel()
 void ASpawnLevel::BeginPlay()
 {
 	Super::BeginPlay();
+
+    if (!HasAuthority())
+    {
+        return;
+    }
 
 
 	SpawnStartLevel(StartLevel);
@@ -45,6 +55,11 @@ void ASpawnLevel::SpawnStartLevel(TSubclassOf<ABaseLevel> StartLevelClass)
 {
     SpawnLocation = FVector(0.0f, 0.0f, 0.0f);
     SpawnRotation = FRotator(0, 0, 0);
+
+    if (!HasAuthority())
+    {
+        return;
+    }
 
     // 이전 청크가 있으면 그 청크의 SpawnLocation에서 이어서 생성
     if (LevelList.Num() > 0 && IsValid(LevelList.Last()))
@@ -92,6 +107,39 @@ void ASpawnLevel::SpawnStartLevel(TSubclassOf<ABaseLevel> StartLevelClass)
     }
 
     LevelList.Add(NewLevel);
+}
+
+void ASpawnLevel::ResetLevels()
+{
+    if (!HasAuthority())
+    {
+        return;
+    }
+
+    // 현재 생성되어 있는 청크 제거
+    for (ABaseLevel* Level : LevelList)
+    {
+        if (IsValid(Level))
+        {
+            Level->Destroy();
+        }
+    }
+
+    LevelList.Empty();
+
+    // 청크 생성 상태 초기화
+    LastMapLevel = 1;
+    RandomLevel = 0;
+
+    SpawnLocation = FVector::ZeroVector;
+    SpawnRotation = FRotator::ZeroRotator;
+
+    // 처음 시작했던 맵 구성 다시 생성
+    SpawnStartLevel(StartLevel);
+    SpawnStartLevel(StartLevel1);
+
+    SpawnLevel(false);
+    SpawnLevel(false);
 }
 
 void ASpawnLevel::SpawnLevel(bool IsFirst)
@@ -701,6 +749,11 @@ void ASpawnLevel::OnOverlapBegin(
 {
 	if (Cast<ABattleCharacter>(OtherActor))
 	{
+        if (!HasAuthority())
+        {
+            return;
+        }
+
 		//UE_LOG(LogTemp, Warning,
 		//	TEXT("TRIGGER OWNER=%s / OtherComp=%s / LevelCount=%d"),
 		//	*GetNameSafe(OverlappedComp ? OverlappedComp->GetOwner() : nullptr),

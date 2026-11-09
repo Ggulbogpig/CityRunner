@@ -70,6 +70,13 @@ class ABattleCharacter : public ACharacter
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
 	UInputAction* PauseAction;
 
+	//멀티 재시작
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = Input, meta = (AllowPrivateAccess = "true"))
+	UInputAction* RestartTestAction;
+
+	void TestRestart();
+
+
 
 
 
@@ -107,9 +114,20 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Runner")
 	void SetCanRun(bool bNewCanRun);
 
+	UFUNCTION(BlueprintImplementableEvent, Category = "Runner")
+	void ResetRunnerVisuals();
+
+	FVector InitialGravityDirection;
+
+
+	
+
 
 	UFUNCTION()
 	void OnRep_CanRun();
+
+	UFUNCTION(NetMulticast, Reliable)
+	void Multicast_ResetRunnerVisuals();
 
 	
 
@@ -129,6 +147,11 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Runner")
 	void SetMapRotating(bool bRotating);
 
+	//멀티용 리셋함수
+	UFUNCTION(BlueprintCallable, Category = "Runner")
+	void ResetRunner();
+
+	FTransform InitialTransform;
 
 	bool bSurfaceChanging = false;
 

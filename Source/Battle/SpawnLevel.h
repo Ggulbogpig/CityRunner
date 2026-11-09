@@ -40,6 +40,8 @@ public:
 	UFUNCTION()
 	void SpawnStartLevel(TSubclassOf<ABaseLevel> StartLevelClass);
 
+	UFUNCTION(BlueprintCallable)
+	void ResetLevels();
 
 
 protected:

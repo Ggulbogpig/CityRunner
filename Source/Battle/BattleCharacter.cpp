@@ -16,6 +16,7 @@
 #include "GameFramework/PlayerController.h"
 #include "Kismet/GameplayStatics.h"
 #include "Net/UnrealNetwork.h"
+#include "GameFramework/CharacterMovementComponent.h"
 
 #include "BattleGameMode.h"
 #include "Spikes.h"
@@ -25,6 +26,19 @@ DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
 //////////////////////////////////////////////////////////////////////////
 // ABattleCharacter
+
+void ABattleCharacter::TestRestart()
+{
+	if (!HasAuthority())
+		return;
+
+	AGameModeBase* GM = GetWorld()->GetAuthGameMode();
+
+	if (GM)
+	{
+		UE_LOG(LogTemp, Warning, TEXT("GameMode Found"));
+	}
+}
 
 ABattleCharacter::ABattleCharacter()
 {
@@ -117,6 +131,16 @@ void ABattleCharacter::BeginPlay()
 	// Call the base class  
 	Super::BeginPlay();
 
+	//멀티용으로 초기 위치 저장
+	InitialTransform = GetActorTransform();
+	//멀티용으로 초기 중력 방향 저장
+	if (GetCharacterMovement())
+	{
+		InitialGravityDirection =
+			GetCharacterMovement()->GetGravityDirection();
+	}
+
+
 	RunDirection = GetActorForwardVector().GetSafeNormal();
 	BaseRunDirection = GetActorForwardVector();
 	BaseRunDirection.Z = 0.0f;
@@ -196,6 +220,14 @@ void ABattleCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 			&ABattleCharacter::HandleDashInput
 		);
 
+		//멀티 재시작
+		EnhancedInputComponent->BindAction(
+			RestartTestAction,
+			ETriggerEvent::Started,
+			this,
+			&ABattleCharacter::TestRestart
+		);
+
 		if (PauseAction)
 		{
 			UE_LOG(LogTemp, Warning, TEXT("PauseAction = %s"), *PauseAction->GetName());
@@ -211,6 +243,7 @@ void ABattleCharacter::SetupPlayerInputComponent(UInputComponent* PlayerInputCom
 		{
 			UE_LOG(LogTemp, Error, TEXT("PauseAction NULL"));
 		}
+
 
 
 
@@ -1451,9 +1484,13 @@ void ABattleCharacter::DieAndRestart()
 	SetActorHiddenInGame(true);
 	
 	//CanMove = false;
-	FTimerHandle UnusedHandle;
-	GetWorldTimerManager().SetTimer(UnusedHandle, this,
-		&ABattleCharacter::RestartLevel, 0.5f, false);
+	// //싱글 모드
+	//FTimerHandle UnusedHandle;
+	//GetWorldTimerManager().SetTimer(UnusedHandle, this,
+	//	&ABattleCharacter::RestartLevel, 0.5f, false);
+
+	//멀티 모드
+	
 
 }
 
@@ -1728,9 +1765,15 @@ void ABattleCharacter::SetCanRun(bool bNewCanRun)
 	}
 }
 
+
 void ABattleCharacter::OnRep_CanRun()
 {
 	// 필요하면 여기서 시작 효과, 사운드 등을 처리
+}
+
+void ABattleCharacter::Multicast_ResetRunnerVisuals_Implementation()
+{
+	ResetRunnerVisuals();
 }
 
 void ABattleCharacter::GetLifetimeReplicatedProps(
@@ -1926,6 +1969,32 @@ void ABattleCharacter::SetMapRotating(bool bRotating)
 		LateralInput = 0.0f;
 		GetCharacterMovement()->StopMovementImmediately();
 	}
+}
+void ABattleCharacter::ResetRunner()
+{
+	SetActorHiddenInGame(false);
+
+	if (UCharacterMovementComponent* Movement = GetCharacterMovement())
+	{
+		Movement->StopMovementImmediately();
+
+		// 시작 중력 방향으로 초기화
+		Movement->SetGravityDirection(InitialGravityDirection);
+	}
+
+	SetActorTransform(
+		InitialTransform,
+		false,
+		nullptr,
+		ETeleportType::TeleportPhysics
+	);
+
+	if (UCharacterMovementComponent* Movement = GetCharacterMovement())
+	{
+		Movement->SetMovementMode(MOVE_Walking);
+	}
+
+	Multicast_ResetRunnerVisuals();
 }
 
 void ABattleCharacter::Tick(float DeltaTime) {
