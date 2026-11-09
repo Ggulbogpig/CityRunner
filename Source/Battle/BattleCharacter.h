@@ -153,6 +153,29 @@ public:
 
 	FTransform InitialTransform;
 
+	UPROPERTY(ReplicatedUsing = OnRep_GravityDirection)
+	FVector ReplicatedGravityDirection;
+
+	UFUNCTION()
+	void OnRep_GravityDirection();
+
+	UFUNCTION(Server, Reliable)
+	void Server_SetGravityDirection(FVector NewGravityDirection);
+	
+
+	// 서버가 확정한 현재 Surface
+	UPROPERTY(ReplicatedUsing = OnRep_SurfaceNormal)
+	FVector ReplicatedSurfaceNormal = FVector::UpVector;
+
+	UFUNCTION()
+	void OnRep_SurfaceNormal();
+
+	// 클라이언트 → 서버
+	UFUNCTION(Server, Reliable)
+	void Server_ApplySurfaceChange_Implementation(const FVector& NewNormal);
+	
+
+
 	bool bSurfaceChanging = false;
 
 	FTimerHandle SurfaceChangeTimer;

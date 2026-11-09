@@ -745,10 +745,23 @@ void ABattleCharacter::ApplySurfaceChange(const FVector& NewNormal)
 		return;
 	}
 
-	bSurfaceChanging = true;
+	//bSurfaceChanging = true;
 
+	//RotateCameraByAngle(SignedAngle);
+	//SetSurfaceNormal(NewUp);
+	// 카메라는 자기 화면에서만 처리
 	RotateCameraByAngle(SignedAngle);
-	SetSurfaceNormal(NewUp);
+
+	// 싱글플레이
+	if (GetNetMode() == NM_Standalone)
+	{
+		SetSurfaceNormal(NewUp);
+	}
+	// 멀티플레이
+	else
+	{
+		Server_ApplySurfaceChange(NewUp);
+	}
 }
 bool ABattleCharacter::IsRealSurface(
 	const FHitResult& OriginalHit,
@@ -991,6 +1004,12 @@ void ABattleCharacter::ClearJumpBuffer()
 
 void ABattleCharacter::TrySetSurfaceFromHit(const FHitResult& Hit)
 {
+	// 내 캐릭터만 Surface 판정
+	if (!IsLocallyControlled())
+	{
+		return;
+	}
+
 	UCharacterMovementComponent* MoveComp =
 		GetCharacterMovement();
 
@@ -1783,6 +1802,8 @@ void ABattleCharacter::GetLifetimeReplicatedProps(
 	Super::GetLifetimeReplicatedProps(OutLifetimeProps);
 
 	DOREPLIFETIME(ABattleCharacter, bCanRun);
+	DOREPLIFETIME(ABattleCharacter, ReplicatedGravityDirection);
+	DOREPLIFETIME(ABattleCharacter, ReplicatedSurfaceNormal);
 }
 
 void ABattleCharacter::UpdateRunnerMovement(float DeltaTime)
@@ -1995,6 +2016,54 @@ void ABattleCharacter::ResetRunner()
 	}
 
 	Multicast_ResetRunnerVisuals();
+}
+
+void ABattleCharacter::OnRep_GravityDirection()
+{
+	GetCharacterMovement()->SetGravityDirection(
+		ReplicatedGravityDirection
+	);
+}
+
+void ABattleCharacter::Server_SetGravityDirection(FVector NewGravityDirection)
+{
+	ReplicatedGravityDirection = NewGravityDirection;
+
+	GetCharacterMovement()->SetGravityDirection(
+		ReplicatedGravityDirection
+	);
+}
+
+void ABattleCharacter::OnRep_SurfaceNormal()
+{
+	SetSurfaceNormal(ReplicatedSurfaceNormal);
+
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("[CLIENT] Surface Replicated %s -> %s"),
+		*GetName(),
+		*ReplicatedSurfaceNormal.ToString()
+	);
+}
+
+void ABattleCharacter::Server_ApplySurfaceChange_Implementation(
+	const FVector& NewNormal)
+{
+	const FVector SafeNormal = NewNormal.GetSafeNormal();
+
+	ReplicatedSurfaceNormal = SafeNormal;
+
+	// 서버 자신의 Character에도 즉시 적용
+	SetSurfaceNormal(SafeNormal);
+
+	UE_LOG(
+		LogTemp,
+		Warning,
+		TEXT("[SERVER] Surface Change %s -> %s"),
+		*GetName(),
+		*SafeNormal.ToString()
+	);
 }
 
 void ABattleCharacter::Tick(float DeltaTime) {
